@@ -19,7 +19,6 @@ echo -e "${BLUE}🧹 Running project cleanup...${NC}"
 
 # Create directories if they don't exist
 mkdir -p "$PROJECT_ROOT/docs/archive"
-mkdir -p "$PROJECT_ROOT/.devassist/patterns"
 mkdir -p "$PROJECT_ROOT/packages/compliance_middleware/tests"
 mkdir -p "$PROJECT_ROOT/packages/edge_proxy/tests"
 
@@ -47,7 +46,7 @@ find "$PROJECT_ROOT" -maxdepth 1 -name "*.ts" -o -name "*.js" -type f 2>/dev/nul
     fi
 done
 
-# Archive old logs
+# Archive old logs (older than 7 days)
 find "$PROJECT_ROOT" -maxdepth 1 -name "*.log" -type f -mtime +7 2>/dev/null | while read file; do
     echo "Archiving old log: $(basename $file)"
     mv "$file" "$PROJECT_ROOT/docs/archive/"
@@ -58,9 +57,8 @@ echo -e "${YELLOW}Cleaning Python cache...${NC}"
 find "$PROJECT_ROOT" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 find "$PROJECT_ROOT" -type f -name "*.pyc" -delete 2>/dev/null || true
 
-# Clean Node modules if needed
+# Clean Node modules if needed (just report size)
 if [ -d "$PROJECT_ROOT/packages/edge_proxy/node_modules" ]; then
-    # Just report size, don't auto-clean
     size=$(du -sh "$PROJECT_ROOT/packages/edge_proxy/node_modules" | cut -f1)
     echo -e "${BLUE}Node modules size: $size${NC}"
 fi
@@ -75,13 +73,13 @@ if ! grep -q ".current-session" "$PROJECT_ROOT/.gitignore" 2>/dev/null; then
     echo ".current-session*" >> "$PROJECT_ROOT/.gitignore"
 fi
 
-if ! grep -q ".devassist.pid" "$PROJECT_ROOT/.gitignore" 2>/dev/null; then
-    echo ".devassist.pid" >> "$PROJECT_ROOT/.gitignore"
+if ! grep -q ".swarm/" "$PROJECT_ROOT/.gitignore" 2>/dev/null; then
+    echo ".swarm/" >> "$PROJECT_ROOT/.gitignore"
 fi
 
-# Check for TODO/FIXME comments
+# Check for TODO/FIXME comments (excluding node_modules)
 echo -e "${YELLOW}Checking for TODO/FIXME comments...${NC}"
-grep -r "TODO\|FIXME" "$PROJECT_ROOT/packages" --include="*.py" --include="*.ts" --include="*.js" 2>/dev/null | head -5 || echo "No TODOs found"
+grep -r "TODO\|FIXME" "$PROJECT_ROOT/packages" --include="*.py" --include="*.ts" --include="*.js" --exclude-dir="node_modules" 2>/dev/null | head -5 || echo "No TODOs found"
 
 # Report file organization
 echo -e "${GREEN}✓ Project cleanup complete${NC}"
@@ -89,8 +87,9 @@ echo -e "${BLUE}Structure:${NC}"
 echo "  packages/compliance_middleware/ - Python FastAPI code"
 echo "  packages/edge_proxy/ - Node.js Fastify code"
 echo "  packages/mcp/ - MCP servers"
+echo "  claudeflow/ - AI orchestration flows"
 echo "  .sessions/ - Session logs"
-echo "  .devassist/ - DevAssist data"
+echo "  .swarm/ - ClaudeFlow hive-mind memory"
 
 # Quick health check
 if [ -f "$PROJECT_ROOT/pyproject.toml" ]; then
@@ -103,6 +102,11 @@ fi
 
 if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
     echo -e "${GREEN}✓ Docker compose configured${NC}"
+fi
+
+# Check ClaudeFlow
+if [ -d "$PROJECT_ROOT/.swarm" ]; then
+    echo -e "${GREEN}✓ ClaudeFlow hive-mind memory preserved${NC}"
 fi
 
 echo -e "${BLUE}Ready for next session!${NC}"

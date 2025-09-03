@@ -1,47 +1,110 @@
+# AI Compliance Middleware
 
-# AI-Native Distribution & Compliance Middleware — Bundle (v3)
+AI-native distribution & compliance middleware for tokenized Real World Assets (RWAs).
 
-This is the **downloadable starter bundle** aligned to our last chat. It:
-- **Drops v4**; v3 is the latest in this bundle.
-- Integrates **claudeflow** (replacing DevAssist).
-- Includes a hardened project template, CI, Dagger stubs, MCP servers, and local-first scripts for macOS.
-- Adds extra elements we discussed: prompts, flows, infra, LaunchAgents, and compliance checklists.
+## Architecture
 
-> **Local paths referenced earlier** (e.g., `/Users/danielconnolly/Projects/ProjectTemplate/`) cannot be read by this bundle (sandboxed),  
-> but the structure below is designed to be synced into your local repos. You can copy desired subfolders into:
-> - `/Users/danielconnolly/Projects/ProjectTemplate/`
-> - `/Users/danielconnolly/Projects/claudeflow/`
-> - `/Users/danielconnolly/Projects/` (general workspace)
-
-## Quickstart
-
-```bash
-# macOS setup (create venv, install deps, prepare git hooks)
-./scripts/setup_mac.sh
-
-# Run services (local dev)
-docker compose up -d
-
-# Start the API (FastAPI) locally
-uvicorn packages.compliance_middleware.app:app --reload
-
-# Run claudeflow flows locally (example)
-claudeflow run flows/composer/01_bootstrap.yaml
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                       Edge Proxy (Node.js/Fastify)               │
+│                    Authentication | Rate Limiting                 │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+┌────────────────────────────▼─────────────────────────────────────┐
+│                  Compliance Middleware (Python/FastAPI)          │
+│                 Policy Engine | Audit | Decisions                │
+└──────────┬──────────────────────────────────────────┬────────────┘
+           │                                          │
+    ┌──────▼──────┐                          ┌───────▼───────┐
+    │   Qdrant    │                          │     Redis     │
+    │  (Vectors)  │                          │    (Cache)    │
+    └─────────────┘                          └───────────────┘
 ```
 
-## Contents
+## Quick Start
 
-- `packages/compliance_middleware` — FastAPI service (RWA distribution/compliance core), Python 3.11, Poetry.
-- `packages/edge_proxy` — lightweight edge gateway (Node + Fastify) for auth/rate limiting & request signing.
-- `packages/mcp` — Model Context Protocol servers (CompliancePolicy, DataLineage, TaskGraph).
-- `claudeflow/` — **Flows** and prompts replacing DevAssist; end-to-end task graphs and verifiers.
-- `infra/` — Dagger build stubs, GitHub Actions CI, Docker, Helm charts (scaffolds).
-- `scripts/` — macOS helpers (Colima, LaunchAgents, env bootstrap).
-- `docs/` — product spec, research notes template, compliance checklists, and runbooks.
-- `.github/workflows` — CI pipeline.
-- `Makefile` — common tasks.
+```bash
+# Setup development environment
+make setup
 
----
+# Start all services
+make docker-up
 
-**Date:** 2025-09-01 22:29:29  
-**Maintainer:** Daniel + ChatGPT
+# Run API server
+make api
+
+# Run tests
+make test
+```
+
+## Session Management
+
+```bash
+# Start development session
+./scripts/session-manager.sh start
+
+# Save checkpoint
+./scripts/session-manager.sh checkpoint
+
+# End session (autonomous)
+./scripts/session-manager.sh end
+```
+
+## AI Orchestration with ClaudeFlow
+
+### Quick Tasks (Swarm Mode)
+```bash
+npx claude-flow@alpha swarm "implement /decide endpoint"
+npx claude-flow@alpha swarm "add Redis caching" --claude
+```
+
+### Complex Projects (Hive-Mind Mode)
+```bash
+npx claude-flow@alpha hive-mind wizard    # Start project
+npx claude-flow@alpha hive-mind status    # Check agents
+npx claude-flow@alpha hive-mind resume    # Continue
+```
+
+## Project Structure
+
+- `packages/compliance_middleware/` — Core FastAPI service (Python)
+- `packages/edge_proxy/` — Edge gateway (Node.js/Fastify)
+- `packages/mcp/` — Model Context Protocol servers
+- `claudeflow/` — AI orchestration flows and prompts
+- `scripts/` — Session management and utilities
+- `.sessions/` — Session logs and terminal recordings
+- `.swarm/` — ClaudeFlow hive-mind memory
+
+## Key Features
+
+- **Compliance Engine**: Jurisdiction-based policy enforcement
+- **Audit Logging**: Complete decision trail
+- **Edge Proxy**: Authentication and rate limiting
+- **AI Integration**: ClaudeFlow for automated development
+- **Session Management**: Context preservation across sessions
+
+## API Endpoints
+
+- `POST /decide` - Compliance decision endpoint
+- `GET /audit` - Audit log retrieval
+- `GET /health` - Service health check
+
+## Development
+
+- Max 2-hour sessions for optimal performance
+- Test coverage target: >80%
+- API response time: <200ms
+- All commits must pass linting
+
+## Technologies
+
+- **FastAPI** - Python web framework
+- **Fastify** - Node.js web server
+- **Qdrant** - Vector database
+- **Redis** - Caching layer
+- **Docker Compose** - Service orchestration
+- **ClaudeFlow** - AI orchestration platform
+
+## License
+
+MIT

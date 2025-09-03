@@ -35,4 +35,4 @@ queen.json.bak
 
 # Old files
 *.old
-*.bak
+*.bak.devassist.pid
