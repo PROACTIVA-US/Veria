@@ -1,0 +1,41 @@
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/compliance.Dockerfile
+    image: compliance-mw:dev
+    container_name: compliance_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./packages/compliance_middleware:/app/packages/compliance_middleware
+    command: ["uvicorn", "packages.compliance_middleware.app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+
+  edge:
+    build:
+      context: ./packages/edge_proxy
+    container_name: edge_proxy
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    command: ["node", "dist/index.js"]
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  qdrant_data:

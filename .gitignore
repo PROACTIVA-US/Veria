@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# Tooling
+.colima/
+*.log
+dist/
+build/
+.coverage
+.mypy_cache/
+
+# Editor
+.vscode/
+.idea/
+
+# Session Management
+.sessions/
+.current-session*
+.devassist.pid
+terminal-*.log
+
+# DevAssist temporary files
+.devassist/*.tmp
+.devassist/*.cache

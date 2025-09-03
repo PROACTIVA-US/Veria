@@ -1,0 +1,15 @@
+
+version: "1"
+name: bootstrap_compliance_project
+steps:
+  - id: scaffold
+    run: prompt
+    with:
+      prompt_file: prompts/composer/bootstrap.md
+      out: out/bootstrap_notes.md
+  - id: verify
+    run: prompt
+    with:
+      prompt_file: prompts/verifier/checklist.md
+      in: out/bootstrap_notes.md
+      out: out/bootstrap_verified.md

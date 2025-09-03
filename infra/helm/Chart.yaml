@@ -1,0 +1,7 @@
+
+apiVersion: v2
+name: compliance-middleware
+description: Helm chart for AI-native compliance middleware
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
