@@ -2,7 +2,7 @@
 
 # =============================================================================
 #                  AI COMPLIANCE MIDDLEWARE SESSION MANAGER
-#              Integrates with ClaudeFlow for AI orchestration
+#              Integrates with DevAssist for AI orchestration
 # =============================================================================
 
 set -e
@@ -20,8 +20,8 @@ NC='\033[0m'
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SESSIONS_DIR="$PROJECT_ROOT/.sessions"
 CURRENT_SESSION="$PROJECT_ROOT/.current-session"
-CLAUDEFLOW_DIR="/Users/danielconnolly/Projects/claudeflow"
-PROJECT_CLAUDEFLOW="$PROJECT_ROOT/claudeflow"
+DEVASSIST_DIR="/Users/danielconnolly/Projects/Custom_MCP/DevAssist_MCP"
+PROJECT_DEVASSIST="$PROJECT_ROOT/devassist"
 
 # Ensure directories exist
 mkdir -p "$SESSIONS_DIR"
@@ -143,7 +143,7 @@ EOF
 ## Session Start
 - Time: $(date '+%H:%M:%S')
 - Branch: $(git branch --show-current)
-- ClaudeFlow: Available
+- DevAssist: Available
 - Project: AI Compliance Middleware
 - Terminal Log: $TERMINAL_LOG
 
@@ -153,10 +153,10 @@ $(grep -A 5 "## Next Priorities" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head
 ## Work Log
 EOF
     
-    # Check ClaudeFlow availability
-    echo -e "${CYAN}🌊 ClaudeFlow Integration:${NC}"
-    if [ -d "$CLAUDEFLOW_DIR" ]; then
-        echo -e "${GREEN}✓ ClaudeFlow v2.0.0 Alpha available${NC}"
+    # Check DevAssist availability
+    echo -e "${CYAN}🌊 DevAssist Integration:${NC}"
+    if [ -d "$DEVASSIST_DIR" ]; then
+        echo -e "${GREEN}✓ DevAssist v2.0.0 Alpha available${NC}"
         
         if command -v claude-flow >/dev/null 2>&1; then
             echo -e "${GREEN}✓ claude-flow command available${NC}"
@@ -166,7 +166,7 @@ EOF
             echo -e "${GREEN}✓ Hive-mind memory found${NC}"
         fi
     else
-        echo -e "${YELLOW}⚠ ClaudeFlow not found${NC}"
+        echo -e "${YELLOW}⚠ DevAssist not found${NC}"
     fi
     
     # Show available commands
@@ -241,7 +241,7 @@ $(git diff --name-only | head -20)
 ## Tests Run
 $(poetry run pytest --co -q 2>/dev/null | tail -5 || echo "No tests configured")
 
-## ClaudeFlow Notes
+## DevAssist Notes
 - Check .swarm/memory.db for hive-mind context
 - Terminal log saved for continuity
 - Session notes preserved for next start
@@ -264,7 +264,7 @@ EOF
         fi
     fi
     
-    # Check for ClaudeFlow hive-mind persistence
+    # Check for DevAssist hive-mind persistence
     if [ -d "$PROJECT_ROOT/.swarm" ]; then
         echo -e "${CYAN}🐝 Preserving hive-mind state...${NC}"
         if [ -f "$PROJECT_ROOT/.swarm/memory.db" ]; then
@@ -411,9 +411,9 @@ case "$1" in
             curl -s http://localhost:8000/health >/dev/null 2>&1 && echo -e "${GREEN}✓ API: Running${NC}" || echo -e "${YELLOW}○ API: Not running${NC}"
             curl -s http://localhost:3000/health >/dev/null 2>&1 && echo -e "${GREEN}✓ Edge Proxy: Running${NC}" || echo -e "${YELLOW}○ Edge Proxy: Not running${NC}"
             
-            # Check ClaudeFlow
+            # Check DevAssist
             if [ -d "$PROJECT_ROOT/.swarm" ]; then
-                echo -e "${GREEN}✓ ClaudeFlow: Hive-mind memory present${NC}"
+                echo -e "${GREEN}✓ DevAssist: Hive-mind memory present${NC}"
             fi
         else
             echo -e "${YELLOW}No active session${NC}"

@@ -87,9 +87,9 @@ echo -e "${BLUE}Structure:${NC}"
 echo "  packages/compliance_middleware/ - Python FastAPI code"
 echo "  packages/edge_proxy/ - Node.js Fastify code"
 echo "  packages/mcp/ - MCP servers"
-echo "  claudeflow/ - AI orchestration flows"
+echo "  devassist/ - AI orchestration flows"
 echo "  .sessions/ - Session logs"
-echo "  .swarm/ - ClaudeFlow hive-mind memory"
+echo "  .swarm/ - DevAssist hive-mind memory"
 
 # Quick health check
 if [ -f "$PROJECT_ROOT/pyproject.toml" ]; then
@@ -104,9 +104,9 @@ if [ -f "$PROJECT_ROOT/docker-compose.yml" ]; then
     echo -e "${GREEN}✓ Docker compose configured${NC}"
 fi
 
-# Check ClaudeFlow
+# Check DevAssist
 if [ -d "$PROJECT_ROOT/.swarm" ]; then
-    echo -e "${GREEN}✓ ClaudeFlow hive-mind memory preserved${NC}"
+    echo -e "${GREEN}✓ DevAssist hive-mind memory preserved${NC}"
 fi
 
 echo -e "${BLUE}Ready for next session!${NC}"

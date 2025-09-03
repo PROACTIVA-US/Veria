@@ -77,9 +77,9 @@ make docker-up
 make build
 ```
 
-## ClaudeFlow AI Orchestration (v2.0.0 Alpha)
+## DevAssist AI Orchestration (v2.0.0 Alpha)
 
-ClaudeFlow provides AI-powered development assistance with swarm intelligence and neural networks.
+DevAssist provides AI-powered development assistance with swarm intelligence and neural networks.
 
 ### Quick Tasks (Swarm Mode)
 For single objectives and rapid implementation:
@@ -114,19 +114,19 @@ sqlite3 .swarm/memory.db "SELECT * FROM tasks ORDER BY created_at DESC LIMIT 5;"
 ```
 
 ### Project-Specific Flows
-Located in `claudeflow/flows/`:
+Located in `devassist/flows/`:
 ```bash
 # Bootstrap project structure
-claudeflow run flows/composer/01_bootstrap.yaml
+devassist run flows/composer/01_bootstrap.yaml
 
 # Research RWA market landscape
-claudeflow run flows/research/10_rwa_market_landscape.yaml
+devassist run flows/research/10_rwa_market_landscape.yaml
 
 # Build deployment artifacts
-claudeflow run flows/bundling/90_build_artifact.yaml
+devassist run flows/bundling/90_build_artifact.yaml
 ```
 
-### ClaudeFlow Features
+### DevAssist Features
 - **🐝 Hive-Mind Intelligence**: Queen-led coordination with worker agents
 - **🧠 Neural Networks**: 27+ cognitive models with WASM acceleration
 - **🔧 87 MCP Tools**: Comprehensive automation toolkit
@@ -157,10 +157,10 @@ This is an **AI-native distribution & compliance middleware** for tokenized Real
 - `data_lineage.py` - Data tracking and lineage
 - `task_graph.py` - Task orchestration
 
-**claudeflow/** - AI orchestration templates
+**devassist/** - AI orchestration templates
 - YAML flow definitions for research, composition, and bundling
 - Prompt templates for different workflow stages
-- Integrates with `/Users/danielconnolly/Projects/claudeflow`
+- Integrates with `/Users/danielconnolly/Projects/Custom_MCP/DevAssist_MCP`
 
 ### Key Patterns
 
@@ -168,7 +168,7 @@ This is an **AI-native distribution & compliance middleware** for tokenized Real
 - **Policy Decision Flow**: Jurisdiction-based allowlisting with risk scoring
 - **Redaction System**: Automatic PII detection and redaction (e.g., SSN masking)
 - **Multi-Service Architecture**: Python core + Node.js edge + Docker orchestration
-- **AI-Powered Development**: ClaudeFlow for automated code generation and testing
+- **AI-Powered Development**: DevAssist for automated code generation and testing
 
 ### Testing
 
@@ -203,7 +203,7 @@ ai-compliance-middleware/
 │   ├── compliance_middleware/  # Python FastAPI
 │   ├── edge_proxy/            # Node.js Fastify
 │   └── mcp/                   # MCP servers
-├── claudeflow/                # AI orchestration flows
+├── devassist/                # AI orchestration flows
 │   ├── flows/                 # YAML workflow definitions
 │   └── prompts/              # Prompt templates
 ├── scripts/
@@ -211,7 +211,7 @@ ai-compliance-middleware/
 ├── .claude/
 │   └── commands/              # Claude Code slash commands
 ├── .sessions/                 # Session logs
-├── .swarm/                    # ClaudeFlow hive-mind memory
+├── .swarm/                    # DevAssist hive-mind memory
 │   ├── memory.db             # SQLite persistence
 │   ├── queen.json            # Queen configuration
 │   └── workers/              # Worker agent states
@@ -225,7 +225,7 @@ ai-compliance-middleware/
 2. **Use checkpoints** every 30 minutes or after major features
 3. **End sessions** with `/session-end` for auto-summary
 4. **Max 2 hours** per session for optimal performance
-5. **ClaudeFlow memory** persists in `.swarm/` across sessions
+5. **DevAssist memory** persists in `.swarm/` across sessions
 
 ## Performance Targets
 

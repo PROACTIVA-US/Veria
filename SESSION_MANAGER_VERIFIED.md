@@ -58,7 +58,7 @@
 ✅ Shows "NEXT TASKS FOR THIS SESSION" box
 ✅ Displays priorities from previous session
 ✅ Shows sprint goals and component status
-✅ Detects ClaudeFlow availability
+✅ Detects DevAssist availability
 
 ### Test 2: Session End
 ✅ Runs autonomously without prompts
@@ -72,7 +72,7 @@
 ✅ Preserves session notes
 ✅ Links everything in READ_FOR_CONTEXT.md
 
-## ClaudeFlow Integration
+## DevAssist Integration
 
 **Replaces DevAssist with:**
 - 87 MCP tools for automation
@@ -89,7 +89,7 @@ npx claude-flow@alpha swarm "implement /decide endpoint"
 npx claude-flow@alpha hive-mind wizard
 
 # Project flows
-claudeflow run flows/composer/01_bootstrap.yaml
+devassist run flows/composer/01_bootstrap.yaml
 ```
 
 ## Usage Workflow
@@ -101,7 +101,7 @@ claudeflow run flows/composer/01_bootstrap.yaml
 
 2. **During Work**
    - Use `/session-checkpoint` to save progress
-   - Use ClaudeFlow for AI assistance
+   - Use DevAssist for AI assistance
    - Terminal is being recorded for continuity
 
 3. **End Session**

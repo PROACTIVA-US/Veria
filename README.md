@@ -1,4 +1,4 @@
-# AI Compliance Middleware
+# Veria
 
 AI-native distribution & compliance middleware for tokenized Real World Assets (RWAs).
 
@@ -50,19 +50,19 @@ make test
 ./scripts/session-manager.sh end
 ```
 
-## AI Orchestration with ClaudeFlow
+## AI Orchestration with DevAssist
 
 ### Quick Tasks (Swarm Mode)
 ```bash
-npx claude-flow@alpha swarm "implement /decide endpoint"
-npx claude-flow@alpha swarm "add Redis caching" --claude
+npx devassist swarm "implement /decide endpoint"
+npx devassist swarm "add Redis caching" --claude
 ```
 
 ### Complex Projects (Hive-Mind Mode)
 ```bash
-npx claude-flow@alpha hive-mind wizard    # Start project
-npx claude-flow@alpha hive-mind status    # Check agents
-npx claude-flow@alpha hive-mind resume    # Continue
+npx devassist hive-mind wizard    # Start project
+npx devassist hive-mind status    # Check agents
+npx devassist hive-mind resume    # Continue
 ```
 
 ## Project Structure
@@ -70,17 +70,17 @@ npx claude-flow@alpha hive-mind resume    # Continue
 - `packages/compliance_middleware/` — Core FastAPI service (Python)
 - `packages/edge_proxy/` — Edge gateway (Node.js/Fastify)
 - `packages/mcp/` — Model Context Protocol servers
-- `claudeflow/` — AI orchestration flows and prompts
+- `devassist/` — AI orchestration flows and prompts
 - `scripts/` — Session management and utilities
 - `.sessions/` — Session logs and terminal recordings
-- `.swarm/` — ClaudeFlow hive-mind memory
+- `.swarm/` — DevAssist hive-mind memory
 
 ## Key Features
 
 - **Compliance Engine**: Jurisdiction-based policy enforcement
 - **Audit Logging**: Complete decision trail
 - **Edge Proxy**: Authentication and rate limiting
-- **AI Integration**: ClaudeFlow for automated development
+- **AI Integration**: DevAssist for automated development
 - **Session Management**: Context preservation across sessions
 
 ## API Endpoints
@@ -103,7 +103,7 @@ npx claude-flow@alpha hive-mind resume    # Continue
 - **Qdrant** - Vector database
 - **Redis** - Caching layer
 - **Docker Compose** - Service orchestration
-- **ClaudeFlow** - AI orchestration platform
+- **DevAssist** - AI orchestration platform
 
 ## License
 

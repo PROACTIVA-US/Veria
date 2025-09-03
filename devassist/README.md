@@ -1,29 +1,29 @@
-# ClaudeFlow Integration
+# DevAssist Integration
 
 This folder contains **flows** and **prompts** used to orchestrate research, drafting, verification, and packaging.
-These integrate with the main ClaudeFlow platform at `/Users/danielconnolly/Projects/claudeflow/`.
+These integrate with the main DevAssist platform at `/Users/danielconnolly/Projects/Custom_MCP/DevAssist_MCP/`.
 
 ## Example Commands
 
 ```bash
 # List available flows
-claudeflow list
+devassist list
 
 # Run specific flows
-claudeflow run flows/composer/01_bootstrap.yaml
-claudeflow run flows/research/10_rwa_market_landscape.yaml
-claudeflow run flows/bundling/90_build_artifact.yaml
+devassist run flows/composer/01_bootstrap.yaml
+devassist run flows/research/10_rwa_market_landscape.yaml
+devassist run flows/bundling/90_build_artifact.yaml
 ```
 
 ## Quick AI Tasks
 
 ```bash
 # Single-objective tasks with swarm mode
-npx claude-flow@alpha swarm "implement the /decide endpoint"
-npx claude-flow@alpha swarm "add Redis caching layer" --claude
+npx devassist swarm "implement the /decide endpoint"
+npx devassist swarm "add Redis caching layer" --claude
 
 # Complex projects with hive-mind
-npx claude-flow@alpha hive-mind wizard
+npx devassist hive-mind wizard
 ```
 
 ## Project Flows

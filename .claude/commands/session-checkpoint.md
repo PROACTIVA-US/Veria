@@ -14,7 +14,7 @@ This will:
 2. Save the checkpoint to the session file
 3. Run a quick test check (pytest --co)
 4. Check if API is running (health endpoint)
-5. Check ClaudeFlow hive-mind status if active
+5. Check DevAssist hive-mind status if active
 
 ## Use Checkpoints To
 - Mark completion of subtasks
@@ -22,7 +22,7 @@ This will:
 - Note discovered issues
 - Save before major changes
 - Document API endpoint implementations
-- Track ClaudeFlow agent progress
+- Track DevAssist agent progress
 
 ## Example Progress Notes
 - "Implemented /decide endpoint with jurisdiction checking"
@@ -32,7 +32,7 @@ This will:
 - "Edge proxy authentication middleware complete"
 - "Test coverage increased to 82%"
 - "Docker compose configuration working with all services"
-- "ClaudeFlow swarm completed database schema generation"
+- "DevAssist swarm completed database schema generation"
 - "Hive-mind agents optimized API performance by 30%"
 
 ## Quick Status Checks
@@ -61,7 +61,7 @@ poetry run pytest packages/compliance_middleware/tests/test_health.py
 poetry run pytest --cov=packages/compliance_middleware
 ```
 
-### ClaudeFlow Status
+### DevAssist Status
 ```bash
 # Check hive-mind agents
 npx claude-flow@alpha hive-mind status
@@ -77,8 +77,8 @@ tail -n 20 .swarm/logs/latest.log
 - ✅ After implementing a new endpoint
 - ✅ When tests are passing
 - ✅ Before refactoring
-- ✅ After ClaudeFlow task completion
+- ✅ After DevAssist task completion
 - ✅ When switching between services (API ↔ Edge Proxy)
 - ✅ Before running destructive operations
 
-Checkpoints help maintain context for both you and ClaudeFlow's memory system!
+Checkpoints help maintain context for both you and DevAssist's memory system!

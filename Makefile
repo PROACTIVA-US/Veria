@@ -11,7 +11,7 @@ help:
 	@echo "  build      - docker build images"
 	@echo "  docker-up  - compose up -d"
 	@echo "  docker-down- compose down"
-	@echo "  cf-run     - run a claudeflow example"
+	@echo "  cf-run     - run a devassist example"
 	@echo "  api        - start FastAPI locally"
 
 setup:
@@ -35,7 +35,7 @@ docker-down:
 	docker compose down
 
 cf-run:
-	claudeflow run claudeflow/flows/composer/01_bootstrap.yaml
+	devassist run devassist/flows/composer/01_bootstrap.yaml
 
 api:
 	poetry run uvicorn packages.compliance_middleware.app:app --reload --port 8000

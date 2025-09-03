@@ -40,9 +40,9 @@
         "problemMatcher": []
       },
       {
-        "label": "Claudeflow: Bootstrap Flow",
+        "label": "Devassist: Bootstrap Flow",
         "type": "shell",
-        "command": "claudeflow run claudeflow/flows/composer/01_bootstrap.yaml",
+        "command": "devassist run devassist/flows/composer/01_bootstrap.yaml",
         "problemMatcher": []
       }
     ]

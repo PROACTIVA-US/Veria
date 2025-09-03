@@ -1,8 +1,8 @@
 ---
-description: Start a new AI Compliance Middleware development session with ClaudeFlow AI orchestration
+description: Start a new AI Compliance Middleware development session with DevAssist AI orchestration
 ---
 
-Start a new development session for the AI Compliance Middleware system with automatic ClaudeFlow integration for AI-powered assistance.
+Start a new development session for the AI Compliance Middleware system with automatic DevAssist integration for AI-powered assistance.
 
 Execute the session manager start command:
 ```bash
@@ -13,17 +13,17 @@ This will:
 1. Create a new session file
 2. Check git status  
 3. Review STATUS.md for current priorities
-4. Check ClaudeFlow availability (v2.0.0 Alpha)
+4. Check DevAssist availability (v2.0.0 Alpha)
 5. Detect hive-mind memory if present (.swarm/)
 6. Set up session tracking
-7. Display available ClaudeFlow commands
+7. Display available DevAssist commands
 
 After starting, review the development documentation:
 ```bash
 cat /Users/danielconnolly/Projects/ai-compliance-middleware/CLAUDE.md
 ```
 
-## ClaudeFlow Commands
+## DevAssist Commands
 
 ### Quick Tasks (Swarm Mode)
 For single objectives and rapid implementation:
@@ -44,9 +44,9 @@ npx claude-flow@alpha hive-mind resume     # Continue previous session
 ### Project-Specific Flows
 Run predefined workflows:
 ```bash
-claudeflow run flows/composer/01_bootstrap.yaml
-claudeflow run flows/research/10_rwa_market_landscape.yaml
-claudeflow run flows/bundling/90_build_artifact.yaml
+devassist run flows/composer/01_bootstrap.yaml
+devassist run flows/research/10_rwa_market_landscape.yaml
+devassist run flows/bundling/90_build_artifact.yaml
 ```
 
 ## Key Project Commands
@@ -60,7 +60,7 @@ claudeflow run flows/bundling/90_build_artifact.yaml
 - **FastAPI**: Compliance decision engine (Python)
 - **Edge Proxy**: Gateway with auth & rate limiting (Node.js)
 - **MCP Servers**: Model Context Protocol integrations
-- **ClaudeFlow**: AI orchestration with 87 MCP tools
+- **DevAssist**: AI orchestration with 87 MCP tools
 
 ## Session Management
 - Max 2 hours per session
@@ -74,7 +74,7 @@ claudeflow run flows/bundling/90_build_artifact.yaml
 - `/audit` - Audit logging  
 - `/health` - Service health check
 
-ClaudeFlow Features:
+DevAssist Features:
 - 🐝 Hive-mind swarm intelligence
 - 🧠 27+ neural cognitive models
 - 🔧 87 advanced MCP tools

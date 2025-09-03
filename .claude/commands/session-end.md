@@ -1,5 +1,5 @@
 ---
-description: End the current AI Compliance Middleware session with automatic summary and ClaudeFlow state preservation
+description: End the current AI Compliance Middleware session with automatic summary and DevAssist state preservation
 ---
 
 End the current development session by running the session manager with automatic summary generation.
@@ -20,14 +20,14 @@ When prompted, use these responses based on the session's work:
 
 The session manager will:
 1. Save session summary
-2. Check ClaudeFlow hive-mind state (.swarm/)
+2. Check DevAssist hive-mind state (.swarm/)
 3. Preserve SQLite memory database
 4. **AUTO-CLEANUP project structure** (moves stray files)
 5. Commit changes to git (if requested)
 6. Prompt for GitHub push
 7. Clean up session markers
 
-## ClaudeFlow State Preservation
+## DevAssist State Preservation
 
 If you've been using hive-mind mode, the following will be preserved:
 - `.swarm/memory.db` - SQLite database with 12 specialized tables
@@ -65,4 +65,4 @@ poetry run black packages/compliance_middleware
 npx prettier --write packages/edge_proxy/src
 ```
 
-Remember: ClaudeFlow hive-mind memory persists across sessions!
+Remember: DevAssist hive-mind memory persists across sessions!
