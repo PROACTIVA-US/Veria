@@ -2,6 +2,33 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Session Management
+
+### Start Session
+```bash
+# Use Claude Code custom command
+/session-start
+
+# Or directly in terminal
+./scripts/session-manager.sh start
+```
+
+### End Session
+```bash
+# Use Claude Code custom command  
+/session-end
+
+# Or directly with auto-summary
+./scripts/session-manager.sh end "completed" "decisions" "metrics" "blockers" "priorities"
+```
+
+### Checkpoint Progress
+```bash
+/session-checkpoint
+# Or
+./scripts/session-manager.sh checkpoint
+```
+
 ## Development Commands
 
 ### Setup
@@ -50,19 +77,62 @@ make docker-up
 make build
 ```
 
-### ClaudeFlow (Available via /Users/danielconnolly/Projects/claudeflow)
+## ClaudeFlow AI Orchestration (v2.0.0 Alpha)
+
+ClaudeFlow provides AI-powered development assistance with swarm intelligence and neural networks.
+
+### Quick Tasks (Swarm Mode)
+For single objectives and rapid implementation:
 ```bash
-# Run claude-flow commands via npx (auto-resolves to alpha version)
-npx claude-flow@alpha swarm "build me a REST API" --claude
-npx claude-flow@alpha hive-mind wizard
-npx claude-flow@alpha sparc tdd "compliance feature"
+# Generate code
+npx claude-flow@alpha swarm "implement /decide endpoint with jurisdiction checking"
 
-# Using local wrapper script
-./claudeflow/claude-flow swarm "task description" --claude
+# Add features
+npx claude-flow@alpha swarm "add Redis caching to improve API performance" --claude
 
-# Example flow execution (if integrated)
-make cf-run
+# Write tests
+npx claude-flow@alpha swarm "create integration tests for compliance flow"
+
+# Fix issues
+npx claude-flow@alpha swarm "debug TypeScript compilation errors in edge proxy"
 ```
+
+### Complex Projects (Hive-Mind Mode)
+For persistent sessions with specialized agents:
+```bash
+# Start interactive wizard
+npx claude-flow@alpha hive-mind wizard
+
+# Check agent status
+npx claude-flow@alpha hive-mind status
+
+# Resume previous session
+npx claude-flow@alpha hive-mind resume
+
+# View memory
+sqlite3 .swarm/memory.db "SELECT * FROM tasks ORDER BY created_at DESC LIMIT 5;"
+```
+
+### Project-Specific Flows
+Located in `claudeflow/flows/`:
+```bash
+# Bootstrap project structure
+claudeflow run flows/composer/01_bootstrap.yaml
+
+# Research RWA market landscape
+claudeflow run flows/research/10_rwa_market_landscape.yaml
+
+# Build deployment artifacts
+claudeflow run flows/bundling/90_build_artifact.yaml
+```
+
+### ClaudeFlow Features
+- **🐝 Hive-Mind Intelligence**: Queen-led coordination with worker agents
+- **🧠 Neural Networks**: 27+ cognitive models with WASM acceleration
+- **🔧 87 MCP Tools**: Comprehensive automation toolkit
+- **💾 SQLite Memory**: Persistent context in `.swarm/memory.db`
+- **🔄 Dynamic Agents**: Self-organizing with fault tolerance
+- **🪝 Hooks System**: Pre/post operation automation
 
 ## Architecture Overview
 
@@ -87,12 +157,10 @@ This is an **AI-native distribution & compliance middleware** for tokenized Real
 - `data_lineage.py` - Data tracking and lineage
 - `task_graph.py` - Task orchestration
 
-**claudeflow/** - AI orchestration and task automation templates
-- Template YAML flow definitions for research, composition, and bundling
+**claudeflow/** - AI orchestration templates
+- YAML flow definitions for research, composition, and bundling
 - Prompt templates for different workflow stages
-- Integrates with `/Users/danielconnolly/Projects/claudeflow` - full claude-flow v2.0.0-alpha platform
-- Claude-flow features: 87 MCP tools, hive-mind intelligence, neural networks, SPARC methodology
-- Commands: `npx claude-flow@alpha swarm`, `hive-mind`, `sparc tdd`
+- Integrates with `/Users/danielconnolly/Projects/claudeflow`
 
 ### Key Patterns
 
@@ -100,6 +168,7 @@ This is an **AI-native distribution & compliance middleware** for tokenized Real
 - **Policy Decision Flow**: Jurisdiction-based allowlisting with risk scoring
 - **Redaction System**: Automatic PII detection and redaction (e.g., SSN masking)
 - **Multi-Service Architecture**: Python core + Node.js edge + Docker orchestration
+- **AI-Powered Development**: ClaudeFlow for automated code generation and testing
 
 ### Testing
 
@@ -109,6 +178,9 @@ make test
 
 # Run specific test
 poetry run pytest packages/compliance_middleware/tests/test_health.py
+
+# Coverage report
+poetry run pytest --cov=packages/compliance_middleware
 ```
 
 ### Linting & Type Checking
@@ -125,9 +197,39 @@ npx eslint packages/edge_proxy --ext .ts,.js
 
 ## Project Structure
 
-- `packages/compliance_middleware/app.py` - Main FastAPI application
-- `packages/edge_proxy/` - Node.js gateway service
-- `packages/mcp/` - MCP protocol servers
-- `claudeflow/` - AI orchestration templates (connects to full claude-flow platform)
-- `infra/` - Docker and deployment configurations
-- `docs/` - Product specifications and runbooks
+```
+ai-compliance-middleware/
+├── packages/
+│   ├── compliance_middleware/  # Python FastAPI
+│   ├── edge_proxy/            # Node.js Fastify
+│   └── mcp/                   # MCP servers
+├── claudeflow/                # AI orchestration flows
+│   ├── flows/                 # YAML workflow definitions
+│   └── prompts/              # Prompt templates
+├── scripts/
+│   └── session-manager.sh     # Session management
+├── .claude/
+│   └── commands/              # Claude Code slash commands
+├── .sessions/                 # Session logs
+├── .swarm/                    # ClaudeFlow hive-mind memory
+│   ├── memory.db             # SQLite persistence
+│   ├── queen.json            # Queen configuration
+│   └── workers/              # Worker agent states
+├── infra/                     # Docker and deployment
+└── docs/                      # Documentation
+```
+
+## Session Guidelines
+
+1. **Start each session** with `/session-start`
+2. **Use checkpoints** every 30 minutes or after major features
+3. **End sessions** with `/session-end` for auto-summary
+4. **Max 2 hours** per session for optimal performance
+5. **ClaudeFlow memory** persists in `.swarm/` across sessions
+
+## Performance Targets
+
+- API Response: <200ms
+- Test Coverage: >80%
+- Docker startup: <15s
+- All linters passing

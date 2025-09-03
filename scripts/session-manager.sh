@@ -2,7 +2,7 @@
 
 # =============================================================================
 #                  AI COMPLIANCE MIDDLEWARE SESSION MANAGER
-#              Integrates with DevAssist MCP for session tracking
+#              Integrates with ClaudeFlow for AI orchestration
 # =============================================================================
 
 set -e
@@ -17,14 +17,13 @@ NC='\033[0m'
 
 # Paths
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DEVASSIST_DIR="$PROJECT_ROOT/.devassist"
 SESSIONS_DIR="$PROJECT_ROOT/.sessions"
 CURRENT_SESSION="$PROJECT_ROOT/.current-session"
-DEVASSIST_MCP="/Users/danielconnolly/Projects/Custom_MCP/DevAssist_MCP"
+CLAUDEFLOW_DIR="/Users/danielconnolly/Projects/claudeflow"
+PROJECT_CLAUDEFLOW="$PROJECT_ROOT/claudeflow"
 
 # Ensure directories exist
 mkdir -p "$SESSIONS_DIR"
-mkdir -p "$DEVASSIST_DIR"
 
 # Function to start session
 start_session() {
@@ -78,18 +77,31 @@ start_session() {
         echo
     fi
     
-    # Load DevAssist hooks if available
-    if [ -f "$PROJECT_ROOT/scripts/devassist-hooks.sh" ]; then
-        source "$PROJECT_ROOT/scripts/devassist-hooks.sh"
-        devassist_session_start
-    fi
-    
-    # Check if DevAssist MCP is running
-    if pgrep -f "DevAssist_MCP" > /dev/null; then
-        echo -e "${GREEN}✓ DevAssist MCP is running${NC}"
+    # Check ClaudeFlow availability
+    echo -e "${CYAN}🌊 Checking ClaudeFlow integration...${NC}"
+    if [ -d "$CLAUDEFLOW_DIR" ]; then
+        echo -e "${GREEN}✓ ClaudeFlow v2.0.0 Alpha available${NC}"
+        echo -e "${BLUE}  Location: $CLAUDEFLOW_DIR${NC}"
+        
+        # Check if claude-flow is accessible
+        if command -v claude-flow >/dev/null 2>&1; then
+            echo -e "${GREEN}✓ claude-flow command available${NC}"
+        elif [ -f "$CLAUDEFLOW_DIR/bin/claude-flow" ]; then
+            echo -e "${YELLOW}  Run: npm link in $CLAUDEFLOW_DIR to enable global command${NC}"
+        fi
+        
+        # Check for .swarm directory (hive-mind memory)
+        if [ -d "$PROJECT_ROOT/.swarm" ]; then
+            echo -e "${GREEN}✓ Hive-mind memory found (.swarm/)${NC}"
+            if [ -f "$PROJECT_ROOT/.swarm/memory.db" ]; then
+                echo -e "${BLUE}  SQLite memory: .swarm/memory.db${NC}"
+            fi
+        fi
     else
-        echo -e "${BLUE}DevAssist MCP will auto-connect via Claude Code${NC}"
+        echo -e "${YELLOW}⚠ ClaudeFlow not found at $CLAUDEFLOW_DIR${NC}"
+        echo -e "${BLUE}  Install with: npm install -g @anthropic-ai/claude-code${NC}"
     fi
+    echo
     
     # Check for previous terminal log and read it
     LAST_TERMINAL_LOG=$(ls -t "$SESSIONS_DIR"/terminal-*.log 2>/dev/null | head -1)
@@ -134,7 +146,7 @@ EOF
 ## Session Start
 - Time: $(date '+%H:%M:%S')
 - Branch: $(git branch --show-current)
-- DevAssist: Active
+- ClaudeFlow: Available
 - Project: AI Compliance Middleware
 
 ## Objectives
@@ -143,11 +155,22 @@ EOF
 ## Work Log
 EOF
     
-    # Check for ClaudeFlow integration
-    if [ -d "$PROJECT_ROOT/claudeflow" ]; then
-        echo -e "${CYAN}📦 ClaudeFlow Available:${NC}"
-        echo "• ${BLUE}npx claude-flow@alpha swarm${NC} - Multi-agent tasks"
-        echo "• ${BLUE}npx claude-flow@alpha hive-mind wizard${NC} - Interactive intelligence"
+    # Show ClaudeFlow commands
+    if [ -d "$PROJECT_CLAUDEFLOW" ]; then
+        echo -e "${CYAN}📦 ClaudeFlow Commands Available:${NC}"
+        echo -e "${BLUE}Quick Tasks (Swarm):${NC}"
+        echo "  • ${GREEN}npx claude-flow@alpha swarm \"implement /decide endpoint\"${NC}"
+        echo "  • ${GREEN}npx claude-flow@alpha swarm \"add Redis caching\" --claude${NC}"
+        echo ""
+        echo -e "${BLUE}Complex Projects (Hive-Mind):${NC}"
+        echo "  • ${GREEN}npx claude-flow@alpha hive-mind wizard${NC} - Interactive setup"
+        echo "  • ${GREEN}npx claude-flow@alpha hive-mind status${NC} - Check agents"
+        echo ""
+        echo -e "${BLUE}Project Flows:${NC}"
+        if [ -d "$PROJECT_CLAUDEFLOW/flows" ]; then
+            echo "  • ${GREEN}claudeflow run flows/composer/01_bootstrap.yaml${NC}"
+            echo "  • ${GREEN}claudeflow run flows/research/10_rwa_market_landscape.yaml${NC}"
+        fi
         echo
     fi
     
@@ -161,9 +184,10 @@ EOF
     echo "• ${YELLOW}Edge Proxy: Fastify on port 3000${NC}"
     echo "• ${YELLOW}Test coverage: Keep >80%${NC}"
     echo "• ${YELLOW}Session limit: 2 hours${NC}"
+    echo "• ${YELLOW}AI Help: Use ClaudeFlow swarm/hive-mind${NC}"
     echo
     echo -e "${BLUE}Session file: $SESSION_FILE${NC}"
-    echo -e "${BLUE}DevAssist will track architectural decisions${NC}"
+    echo -e "${BLUE}ClaudeFlow will orchestrate AI assistance${NC}"
 }
 
 # Function to end session
@@ -235,9 +259,10 @@ $(git diff --name-only)
 ## Tests Run
 $(poetry run pytest --co -q 2>/dev/null | tail -5 || echo "No tests run")
 
-## DevAssist Notes
-- Architectural decisions should be added to .devassist/architectural_decisions.md
-- Update knowledge base if major changes were made
+## ClaudeFlow Notes
+- Check .swarm/memory.db for hive-mind context
+- Review claudeflow/flows/ for available automation
+- Use 'npx claude-flow@alpha swarm' for quick tasks
 EOF
     
     # Update STATUS.md with latest priorities
@@ -258,23 +283,16 @@ EOF
         fi
     fi
     
-    # Check for architectural decisions
-    if [ "$AUTO_MODE" = "yes" ]; then
-        echo -e "${YELLOW}Checking DevAssist for architectural decisions...${NC}"
-        echo -e "${BLUE}Architectural decisions are tracked in .devassist/${NC}"
-    else
-        echo -e "${YELLOW}Checking for architectural decisions...${NC}"
-        read -p "Were any architectural decisions made? (y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo -e "${BLUE}Remember to update .devassist/architectural_decisions.md${NC}"
+    # Check for ClaudeFlow hive-mind persistence
+    if [ -d "$PROJECT_ROOT/.swarm" ]; then
+        echo -e "${CYAN}🐝 Saving hive-mind state...${NC}"
+        if [ -f "$PROJECT_ROOT/.swarm/memory.db" ]; then
+            SIZE=$(du -h "$PROJECT_ROOT/.swarm/memory.db" | cut -f1)
+            echo -e "${BLUE}  Memory database: $SIZE${NC}"
         fi
-    fi
-    
-    # Run DevAssist session end analysis
-    if [ -f "$PROJECT_ROOT/scripts/devassist-hooks.sh" ]; then
-        source "$PROJECT_ROOT/scripts/devassist-hooks.sh"
-        devassist_session_end "$SESSION_FILE"
+        if [ -f "$PROJECT_ROOT/.swarm/queen.json" ]; then
+            echo -e "${BLUE}  Queen configuration preserved${NC}"
+        fi
     fi
     
     # Git operations
@@ -349,7 +367,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>" || echo -e "${YELLOW}No changes 
         echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
         echo -e "${YELLOW}Next session: Run /session-start when you return${NC}"
     else
-        echo -e "${BLUE}Remember to review architectural decisions if any were made${NC}"
+        echo -e "${BLUE}Remember to save any ClaudeFlow hive-mind state${NC}"
     fi
 }
 
@@ -376,6 +394,12 @@ checkpoint() {
     # Check service health if running
     curl -s http://localhost:8000/health 2>/dev/null && echo -e "${GREEN}✓ API is running${NC}" || echo -e "${YELLOW}API not running${NC}"
     
+    # Check ClaudeFlow status if hive-mind active
+    if [ -f "$PROJECT_ROOT/.swarm/queen.json" ]; then
+        echo -e "${CYAN}🐝 Hive-mind status:${NC}"
+        echo -e "${BLUE}  Queen active, workers available${NC}"
+    fi
+    
     echo -e "${GREEN}✓ Checkpoint saved${NC}"
 }
 
@@ -394,13 +418,15 @@ case "$1" in
     status)
         if [ -f "$CURRENT_SESSION" ]; then
             echo -e "${GREEN}Active session: $(cat $CURRENT_SESSION)${NC}"
-            if [ -f "$PROJECT_ROOT/.devassist.pid" ]; then
-                echo -e "${GREEN}DevAssist MCP: Running (PID: $(cat $PROJECT_ROOT/.devassist.pid))${NC}"
-            fi
             
             # Check services
             curl -s http://localhost:8000/health >/dev/null 2>&1 && echo -e "${GREEN}API: Running on port 8000${NC}" || echo -e "${YELLOW}API: Not running${NC}"
             curl -s http://localhost:3000/health >/dev/null 2>&1 && echo -e "${GREEN}Edge Proxy: Running on port 3000${NC}" || echo -e "${YELLOW}Edge Proxy: Not running${NC}"
+            
+            # Check ClaudeFlow
+            if [ -d "$PROJECT_ROOT/.swarm" ]; then
+                echo -e "${GREEN}ClaudeFlow: Hive-mind memory present${NC}"
+            fi
         else
             echo -e "${YELLOW}No active session${NC}"
         fi
@@ -412,6 +438,10 @@ case "$1" in
         echo "  end        - End current session with summary"
         echo "  checkpoint - Save progress checkpoint"
         echo "  status     - Show session status"
+        echo
+        echo "ClaudeFlow Integration:"
+        echo "  npx claude-flow@alpha swarm <task>  - Quick AI task"
+        echo "  npx claude-flow@alpha hive-mind wizard - Complex project"
         exit 1
         ;;
 esac

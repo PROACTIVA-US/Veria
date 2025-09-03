@@ -25,9 +25,14 @@ build/
 # Session Management
 .sessions/
 .current-session*
-.devassist.pid
 terminal-*.log
 
-# DevAssist temporary files
-.devassist/*.tmp
-.devassist/*.cache
+# ClaudeFlow
+.swarm/
+.swarm-backup/
+*.swarm.db
+queen.json.bak
+
+# Old files
+*.old
+*.bak
