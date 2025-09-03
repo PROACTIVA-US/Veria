@@ -61,7 +61,13 @@ start_session() {
     LAST_SESSION=$(ls -t "$SESSIONS_DIR"/session-*.md 2>/dev/null | head -1)
     if [ -n "$LAST_SESSION" ] && [ -f "$LAST_SESSION" ]; then
         echo -e "${CYAN}From Previous Session:${NC}"
-        grep -A 5 "## Next Priorities" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head -5 || echo "No priorities recorded"
+        # Look for priorities in the session file
+        PRIORITIES=$(grep -A 10 "## Next Priorities" "$LAST_SESSION" 2>/dev/null | tail -n +2 | head -10 | grep -v "^##" | grep -v "^$" | head -5)
+        if [ -n "$PRIORITIES" ]; then
+            echo "$PRIORITIES"
+        else
+            echo "No priorities recorded"
+        fi
         echo
     fi
     
