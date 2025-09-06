@@ -36,3 +36,9 @@ queen.json.bak
 # Old files
 *.old
 *.bak.devassist.pid
+
+# DevAssist
+.devassist/data/
+.devassist/terminal_logs/
+.sessions/
+*.session.json

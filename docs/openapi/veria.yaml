@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Veria API (stub)
+  version: 0.1.0
+paths:
+  /auth/passkey/register:
+    post:
+      summary: Begin passkey registration (mock)
+      responses:
+        '200': { description: ok }
+  /policies:
+    get:
+      summary: List policies (in-memory)
+      responses:
+        '200': { description: ok }
+    post:
+      summary: Create policy (in-memory)
+      responses:
+        '201': { description: created }
+  /policies/simulate:
+    post:
+      summary: Simulate policy (stub allow)
+      responses:
+        '200': { description: ok }
+  /decisions:
+    post:
+      summary: Create decision (stub) and forward to audit
+      responses:
+        '201': { description: created }

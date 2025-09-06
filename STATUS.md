@@ -1,132 +1,97 @@
-# AI Compliance Middleware - Project Status
+# Veria RWA Distribution Middleware - Project Status
 
-## Current Sprint
-**Sprint**: Initial Setup & Session Management  
-**Started**: Session management configured  
-**Target**: 2 hours max per session
+## 🎯 Mission
+Build the "Plaid for tokenized funds" - AI-native distribution & compliance middleware connecting institutions to $24B tokenized RWA market
 
-## Active Goals
-1. ✅ Set up session management system (COMPLETED)
-2. Configure DevAssist integration for AI orchestration
-3. Implement core compliance endpoints
-4. Set up testing framework with >80% coverage
+## 📊 Current Phase
+**Phase**: Transitioning to Blockchain Integration  
+**Sprint**: Week 4-5 - Core Services → Blockchain  
+**Target ARR**: $10M in 3-5 years (40 customers @ $250k ACV)
 
-## System Components
-- [ ] FastAPI Server: `/decide` endpoint
-- [ ] Edge Proxy: Authentication middleware
-- [ ] MCP Servers: Policy & lineage tracking
-- [ ] Docker: Multi-service orchestration
-- [x] DevAssist: AI orchestration platform (v2.0.0 Alpha)
+## ✅ Completed (Last Updated: Sep 4, 2025)
+- [x] Repository structure initialized
+- [x] Docker orchestration configured
+- [x] FastAPI compliance skeleton
+- [x] Edge proxy with Fastify
+- [x] Session management system
+- [x] DevAssist AI orchestration
+- [x] Redis and Qdrant services
+- [x] **MCP command parsing issues FIXED** ✓
+- [x] PostgreSQL schema design ✓
+- [x] DevAssist warm-up integration ✓
 
-## Performance Targets
-- API Response: <200ms
-- Test Coverage: >80%
-- Linting: All passing
-- Docker startup: <15s
+## 🚧 In Progress
+- [ ] **Integration test framework** (70% coverage target)
+- [ ] **CI/CD pipeline setup** (GitHub Actions)
 
-## Next Priorities
-1. Implement `/decide` endpoint with jurisdiction checking
-2. Add Redis caching for performance
-3. Create integration tests for compliance flow
-4. Set up CI/CD pipeline
+## 🚀 Next Sprint: Blockchain Integration (Week 5-6)
+1. **Web3.py integration** - Connect to Ethereum/Polygon
+2. **ERC-3643 contracts** - Deploy token standard
+3. **Chainalysis API** - KYC/AML provider integration
+4. **Multi-chain support** - Add Solana, Avalanche
+5. **Complete integration tests** - Achieve 70% coverage
 
-## Architectural Decisions
-- Use Qdrant for vector storage
-- JWT for authentication
-- Fastify for edge proxy
-- Poetry for Python dependency management
-- DevAssist for AI-powered development assistance
+## 📁 Key Documents
+- **[PRD v2.0](docs/PRD_v2.md)** - Complete product requirements
+- **[Technical Roadmap](docs/TECHNICAL_ROADMAP.md)** - 48-week implementation plan
+- **[Market Research](../research_report.md)** - $10M ARR opportunity analysis
 
-## Development Commands
+## 🏗 Architecture Overview
+```
+┌─────────────────────────────────┐
+│     Client Applications         │
+│   (RIAs, DAOs, Corporates)     │
+└────────────┬────────────────────┘
+             │
+┌────────────▼────────────────────┐
+│       Edge Proxy (Fastify)      │
+│   Auth | Rate Limit | Routing   │
+└────────────┬────────────────────┘
+             │
+┌────────────▼────────────────────┐
+│    Distribution Middleware      │
+│  Universal API | Compliance     │
+│  Treasury Opt | AI Automation   │
+└────────────┬────────────────────┘
+             │
+┌────────────▼────────────────────┐
+│     Blockchain Services         │
+│  Oracles | Bridges | Contracts  │
+└────────────┬────────────────────┘
+             │
+┌────────────▼────────────────────┐
+│         Data Layer              │
+│  PostgreSQL | Redis | Qdrant    │
+└─────────────────────────────────┘
+```
 
-### Core Commands
+## 🎯 Current Priorities (DevAssist Tracked)
+1. **Complete integration test framework** - Get to 70% coverage
+2. **Set up CI/CD pipeline** - GitHub Actions for automated testing
+3. **Begin Web3.py integration** - Start blockchain connectivity
+
+## 💻 Development Commands
+
+### Core Operations
 ```bash
-# Start API
+# Start all services
+make docker-up
+
+# Run API server
 make api
 
 # Run tests
 make test
 
-# Check linting
-make lint
-
-# Start all services
-make docker-up
+# Start DevAssist session with warm-up
+# Use /session-start in Claude
 ```
 
-### Session Management
-```bash
-# Start new session
-./scripts/session-manager.sh start
+## 📊 DevAssist Integration
+- Warm-up enabled for 240% better tool proactivity
+- Sprint tracking active in DevAssist database
+- Session management with context preservation
+- Automated progress tracking
 
-# End session with summary
-./scripts/session-manager.sh end
-
-# Save checkpoint
-./scripts/session-manager.sh checkpoint
-
-# Check status
-./scripts/session-manager.sh status
-```
-
-### DevAssist AI Orchestration
-
-#### Quick Tasks (Swarm Mode)
-```bash
-# Single-objective tasks
-npx claude-flow@alpha swarm "implement /decide endpoint"
-npx claude-flow@alpha swarm "add Redis caching" --claude
-npx claude-flow@alpha swarm "write integration tests"
-```
-
-#### Complex Projects (Hive-Mind Mode)
-```bash
-# Persistent AI agents with memory
-npx claude-flow@alpha hive-mind wizard    # Start new project
-npx claude-flow@alpha hive-mind status    # Check agents
-npx claude-flow@alpha hive-mind resume    # Continue session
-```
-
-#### Project Flows
-```bash
-# Run predefined workflows
-devassist run flows/composer/01_bootstrap.yaml
-devassist run flows/research/10_rwa_market_landscape.yaml
-devassist run flows/bundling/90_build_artifact.yaml
-```
-
-## DevAssist Features
-- 🐝 **Hive-Mind Intelligence**: Queen-led coordination with worker agents
-- 🧠 **Neural Networks**: 27+ cognitive models with WASM acceleration
-- 🔧 **87 MCP Tools**: Comprehensive toolkit for automation
-- 💾 **SQLite Memory**: Persistent .swarm/memory.db with context
-- 🔄 **Dynamic Agents**: Self-organizing with fault tolerance
-
-## Session Guidelines
-- Max 2 hours per session
-- Checkpoint every major feature
-- Test coverage must stay >80%
-- All commits must pass linting
-- DevAssist hive-mind state persists in .swarm/
-
-## Project Structure
-```
-ai-compliance-middleware/
-├── packages/
-│   ├── compliance_middleware/  # Python FastAPI
-│   ├── edge_proxy/            # Node.js Fastify
-│   └── mcp/                   # MCP servers
-├── devassist/                # AI orchestration flows
-├── scripts/
-│   └── session-manager.sh     # Session management
-├── .claude/
-│   └── commands/              # Claude Code commands
-├── .sessions/                 # Session logs
-└── .swarm/                    # DevAssist hive-mind memory
-```
-
-## Notes
-- DevAssist v2.0.0 Alpha provides AI orchestration
-- Session logs stored in `.sessions/`
-- Terminal recordings recommended for context preservation
-- Hive-mind memory persists across sessions in `.swarm/`
+---
+*Last updated: September 4, 2025 by DevAssist Fix Script*

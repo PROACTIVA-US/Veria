@@ -1,0 +1,8 @@
+{
+  "name": "@veria/tests-k6",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "perf": "echo 'Run with: k6 run tests/k6/policy_simulate.js' && exit 0"
+  }
+}

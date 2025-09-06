@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "devassist-Veria": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/Users/danielconnolly/Projects/Veria/.devassist/server.js"],
+      "env": {
+        "PROJECT_ROOT": "/Users/danielconnolly/Projects/Veria",
+        "DEVASSIST_PROJECT": "Veria",
+        "DEVASSIST_WARMUP_ENABLED": "true"
+      }
+    }
+  }
+}

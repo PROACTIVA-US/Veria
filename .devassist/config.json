@@ -1,0 +1,23 @@
+{
+  "project": "Veria",
+  "version": "2.0.0",
+  "features": {
+    "session_management": true,
+    "terminal_logging": true,
+    "knowledge_base": true,
+    "code_analysis": true,
+    "warmup_enabled": true,
+    "blockchain_integration": true,
+    "rwa_tokenization": true
+  },
+  "paths": {
+    "data": ".devassist/data",
+    "docs": ".devassist/docs",
+    "knowledge": ".devassist/knowledge",
+    "logs": ".devassist/terminal_logs"
+  },
+  "blockchain": {
+    "networks": ["ethereum", "polygon", "solana"],
+    "features": ["rwa", "treasury", "defi", "compliance"]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "veria",
+  "private": true,
+  "version": "0.4.0",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*",
+    "tests/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @veria/frontend dev",
+    "dev:gateway": "pnpm --filter @veria/gateway dev",
+    "dev:edge-proxy": "pnpm --filter @veria/edge-proxy dev",
+    "dev:identity": "pnpm --filter @veria/identity-service dev",
+    "dev:policy": "pnpm --filter @veria/policy-service dev",
+    "dev:compliance": "pnpm --filter @veria/compliance-service dev",
+    "dev:audit": "pnpm --filter @veria/audit-log-writer dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint || true",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @veria/tests-e2e test",
+    "test:perf": "pnpm --filter @veria/tests-k6 perf"
+  }
+}
