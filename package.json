@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "dev": "pnpm --filter @veria/frontend dev",
+    "dev:all": "pnpm run dev:gateway & pnpm run dev:identity & pnpm run dev:policy & pnpm run dev:compliance & pnpm run dev:audit & wait",
     "dev:gateway": "pnpm --filter @veria/gateway dev",
     "dev:edge-proxy": "pnpm --filter @veria/edge-proxy dev",
     "dev:identity": "pnpm --filter @veria/identity-service dev",
