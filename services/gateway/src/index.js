@@ -1,7 +1,5 @@
-
-import Fastify from 'fastify';
-const server = Fastify({ logger: true });
-server.get('/', async () => ({ status: 'ok' }));
-server.get('/health', async () => ({ status: 'ok' }));
-const port = process.env.PORT || 3001;
-server.listen({ port, host: '0.0.0.0' });
+import { buildServer } from './server.js';
+const app = buildServer(process.env);
+const port = Number(process.env.PORT || '3001');
+const host = process.env.HOST || '0.0.0.0';
+app.listen({ port, host }).catch((err) => { app.log.error(err); process.exit(1); });

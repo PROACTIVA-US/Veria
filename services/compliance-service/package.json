@@ -1,5 +1,5 @@
 {
-  "name": "@veria/audit-log-writer",
+  "name": "@veria/compliance-service",
   "version": "0.0.0",
   "private": true,
   "type": "module",
