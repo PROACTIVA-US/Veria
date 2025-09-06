@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
-import helmet from 'fastify-helmet';
-import cors from 'fastify-cors';
+import helmet from '@fastify/helmet';
+import cors from '@fastify/cors';
 import fetch from 'node-fetch';
 import { getConfig } from './config.js';
 import { getOrCreateReqId } from './reqid.js';
