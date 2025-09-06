@@ -1,40 +1,65 @@
-# Veria - Tokenized Real World Assets Platform
+# Veria Documentation
 
-## Overview
-Veria is a comprehensive platform for tokenizing and managing real world assets (RWA) with built-in compliance, treasury management, and multi-chain support.
+## 📚 Current Documentation Structure
 
-## Features
-- 🏦 Treasury Management
-- 📊 Real World Asset Tokenization
-- 🔐 KYC/AML Compliance
-- ⛓️ Multi-chain Support (Ethereum, Polygon, Solana)
-- 💰 Money Market Integration
-- 📈 DeFi Protocols
+### Core Documents (Active)
+- **[Product Requirements (PRD)](PRD.md)** - Core product specifications
+- **[Technical Architecture](ARCHITECTURE.md)** - System design and components
+- **[Database Schema](DATABASE_SCHEMA.md)** - Current database structure
+- **[API Documentation](API.md)** - API specifications
+- **[Testing Strategy](Testing-Strategy.md)** - Testing approach and standards
 
-## Quick Start
-```bash
-# Install dependencies
-npm install
+### Sprint Planning (Active)
+- **[Sprint Roadmap](../ROADMAP_AND_SPRINTS.md)** - 8-week MVP plan ← **PRIMARY ROADMAP**
+- **[Current Status](../STATUS.md)** - Real-time sprint progress
+- **[Next Steps](../NEXT_STEPS.md)** - Today's tasks and priorities
+- **[Technical Roadmap](TECHNICAL_ROADMAP.md)** - Detailed 48-week plan
 
-# Start DevAssist session
-./devassist/scripts/session-manager.sh start
+### Implementation Guides
+- **[Implementation Guide](IMPLEMENTATION_GUIDE.md)** - Development instructions
+- **[Runbooks](RUNBOOKS.md)** - Operational procedures
+- **[Policy Schema](Policy-Schema.md)** - Compliance policy structure
 
-# Run development server
-npm run dev
-```
+### Development Support
+- **[Claude Instructions](../CLAUDE.md)** - AI assistant context
+- **[Database Package](../packages/database/README.md)** - Database documentation
+- **[Daily Notes](daily/)** - Sprint daily updates
 
-## Documentation
-- [Architecture](./ARCHITECTURE.md)
-- [API Documentation](./API.md)
-- [Technical Roadmap](./TECHNICAL_ROADMAP.md)
-- [Product Specification](./PRODUCT_SPEC.md)
+### Archived Documents
+Outdated documents have been moved to [`archive/`](archive/) to keep the project clean:
+- Old roadmaps
+- Previous data models
+- Legacy specifications
 
-## Development with DevAssist
-This project uses DevAssist for intelligent development assistance.
+## 🎯 Quick Links for Current Sprint
 
-### Session Commands
-- `/session-start` - Start development session
-- `/session-status` - Check current status
-- `/session-end` - End session with review
-- `/blockchain-integration` - Set up blockchain features
-- `/rwa-feature` - Implement RWA tokenization
+**Sprint 1: Database Foundation (Week 1)**
+- Day 1: ✅ Database schema complete
+- Day 2: 🔄 Redis caching (TODAY)
+- Day 3: ⏳ Connection optimization
+- Day 4: ⏳ Testing coverage
+- Day 5: ⏳ Documentation
+
+## 📊 Documentation Standards
+
+### When Creating New Docs:
+1. Use clear, descriptive names
+2. Include date in header
+3. Link to related documents
+4. Update this README
+
+### When Updating Docs:
+1. Update version/date in header
+2. Note changes in commit
+3. Archive old versions if major changes
+4. Update cross-references
+
+### When Archiving:
+1. Move to `archive/` folder
+2. Add `_old` or date suffix
+3. Create pointer file if needed
+4. Update this README
+
+---
+*Last updated: September 7, 2025*
+*Sprint 1, Day 2*
