@@ -1,0 +1,60 @@
+version: '3.9'
+services:
+  audit:
+    build:
+      context: ..
+      dockerfile: services/audit-log-writer/Dockerfile
+    environment:
+      - AUDIT_DIR=/data
+    volumes:
+      - audit_data:/data
+    ports: ["3005:3005"]
+
+  compliance:
+    build:
+      context: ..
+      dockerfile: services/compliance-service/Dockerfile
+    environment:
+      - AUDIT_WRITER_URL=http://audit:3005/audit
+    ports: ["3004:3004"]
+    depends_on: [audit]
+
+  identity:
+    build:
+      context: ..
+      dockerfile: services/identity-service/Dockerfile
+    ports: ["3002:3002"]
+
+  policy:
+    build:
+      context: ..
+      dockerfile: services/policy-service/Dockerfile
+    environment:
+      - DATABASE_URL=file:/app/services/policy-service/prisma/dev.db
+    volumes:
+      - policy_db:/app/services/policy-service/prisma
+    ports: ["3003:3003"]
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: services/gateway/Dockerfile
+    environment:
+      - IDENTITY_URL=http://identity:3002
+      - POLICY_URL=http://policy:3003
+      - COMPLIANCE_URL=http://compliance:3004
+    ports: ["3001:3001"]
+    depends_on: [identity, policy, compliance]
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: apps/frontend/Dockerfile
+    environment:
+      - NEXT_PUBLIC_GATEWAY_URL=http://localhost:3001
+    ports: ["3000:3000"]
+    depends_on: [gateway]
+
+volumes:
+  policy_db:
+  audit_data:

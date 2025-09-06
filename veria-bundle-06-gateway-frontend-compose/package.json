@@ -1,0 +1,20 @@
+{
+  "name": "veria",
+  "private": true,
+  "version": "0.6.2",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*",
+    "tests/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @veria/frontend dev",
+    "dev:gateway": "pnpm --filter @veria/gateway dev",
+    "dev:identity": "pnpm --filter @veria/identity-service dev",
+    "dev:policy": "pnpm --filter @veria/policy-service dev",
+    "dev:compliance": "pnpm --filter @veria/compliance-service dev",
+    "dev:audit": "pnpm --filter @veria/audit-log-writer dev",
+    "dev:all": "node ops/scripts/dev-all.cjs"
+  }
+}

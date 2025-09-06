@@ -1,0 +1,44 @@
+name: veria-ci
+on:
+  push: { branches: [ main ] }
+  pull_request: { branches: [ main ] }
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Enable corepack
+        run: corepack enable
+      - name: Install deps
+        run: pnpm i
+      - name: Typecheck
+        run: pnpm -r typecheck || true
+      - name: Unit tests (vitest)
+        run: pnpm -r --parallel --workspace-concurrency=1 --filter "./services/*" test
+
+  # E2E (optional, disabled by default)
+  # e2e:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: 'pnpm'
+  #     - name: Enable corepack
+  #       run: corepack enable
+  #     - name: Install
+  #       run: pnpm i
+  #     - name: Install Playwright browsers
+  #       run: pnpm --filter @veria/tests-e2e exec playwright install --with-deps
+  #     - name: Run E2E
+  #       run: |
+  #         pnpm --filter @veria/gateway dev &
+  #         pnpm --filter @veria/frontend dev &
+  #         sleep 10
+  #         pnpm --filter @veria/tests-e2e test

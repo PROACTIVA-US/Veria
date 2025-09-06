@@ -42,3 +42,6 @@ queen.json.bak
 .devassist/terminal_logs/
 .sessions/
 *.session.json
+
+# Git worktrees
+.worktrees/
