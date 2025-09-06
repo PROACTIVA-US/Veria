@@ -3,40 +3,123 @@
 ## 🎯 Mission
 Build the "Plaid for tokenized funds" - AI-native distribution & compliance middleware connecting institutions to $24B tokenized RWA market
 
-## 📊 Current Phase
-**Phase**: Transitioning to Blockchain Integration  
-**Sprint**: Week 4-5 - Core Services → Blockchain  
-**Target ARR**: $10M in 3-5 years (40 customers @ $250k ACV)
+## 📊 Current Status
+**Phase**: Foundation Development  
+**Sprint**: 1 of 8 - Database & Data Layer  
+**Week**: Starting Week 1  
+**Target**: MVP in 8 weeks, Production in 16 weeks  
 
-## ✅ Completed (Last Updated: Sep 4, 2025)
-- [x] Repository structure initialized
-- [x] Docker orchestration configured
-- [x] FastAPI compliance skeleton
-- [x] Edge proxy with Fastify
-- [x] Session management system
-- [x] DevAssist AI orchestration
-- [x] Redis and Qdrant services
-- [x] **MCP command parsing issues FIXED** ✓
-- [x] PostgreSQL schema design ✓
-- [x] DevAssist warm-up integration ✓
+## 🏃 Active Sprint: Database Foundation (Week 1)
+### Day-by-Day Progress:
+- [ ] **Day 1-2**: Core database schema implementation
+- [ ] **Day 3-4**: Redis caching layer setup
+- [ ] **Day 5**: Testing and documentation
 
-## 🚧 In Progress
-- [ ] **Integration test framework** (70% coverage target)
-- [ ] **CI/CD pipeline setup** (GitHub Actions)
+### Sprint Goals:
+1. Complete PostgreSQL schema for all entities
+2. Implement Alembic migrations
+3. Create SQLAlchemy models
+4. Set up Redis caching
+5. Achieve >80% test coverage
 
-## 🚀 Next Sprint: Blockchain Integration (Week 5-6)
-1. **Web3.py integration** - Connect to Ethereum/Polygon
-2. **ERC-3643 contracts** - Deploy token standard
-3. **Chainalysis API** - KYC/AML provider integration
-4. **Multi-chain support** - Add Solana, Avalanche
-5. **Complete integration tests** - Achieve 70% coverage
+## 📈 Overall Progress
 
-## 📁 Key Documents
-- **[PRD v2.0](docs/PRD_v2.md)** - Complete product requirements
-- **[Technical Roadmap](docs/TECHNICAL_ROADMAP.md)** - 48-week implementation plan
-- **[Market Research](../research_report.md)** - $10M ARR opportunity analysis
+### Phase 1: Foundation (Weeks 1-4)
+```
+Sprint 1: Database    [░░░░░░░░░░] 0% - Starting
+Sprint 2: Gateway     [░░░░░░░░░░] 0% - Planned
+Sprint 3: Contracts   [░░░░░░░░░░] 0% - Planned  
+Sprint 4: Identity    [░░░░░░░░░░] 0% - Planned
+```
 
-## 🏗 Architecture Overview
+### Phase 2: Product (Weeks 5-8)
+```
+Sprint 5: Frontend    [░░░░░░░░░░] 0% - Future
+Sprint 6: Integration [░░░░░░░░░░] 0% - Future
+Sprint 7: Compliance  [░░░░░░░░░░] 0% - Future
+Sprint 8: Production  [░░░░░░░░░░] 0% - Future
+```
+
+## ✅ Completed Milestones
+- [x] Project structure initialized
+- [x] Monorepo configuration with pnpm workspaces
+- [x] DevAssist AI orchestration integrated
+- [x] Service scaffolding created
+- [x] Blockchain provider implemented (Polygon)
+- [x] PM overhead removed, clean codebase
+- [x] Comprehensive roadmap created
+
+## 🚧 Current Week Focus (Week 1)
+| Task | Status | Owner | Due |
+|------|--------|-------|-----|
+| Database schema design | 🔄 In Progress | - | Day 2 |
+| User/Organization tables | ⏳ Pending | - | Day 1 |
+| Products/Compliance tables | ⏳ Pending | - | Day 2 |
+| Transaction/Audit tables | ⏳ Pending | - | Day 2 |
+| SQLAlchemy models | ⏳ Pending | - | Day 3 |
+| Redis configuration | ⏳ Pending | - | Day 3 |
+| Migration scripts | ⏳ Pending | - | Day 4 |
+| Unit tests | ⏳ Pending | - | Day 5 |
+
+## 🎯 Key Performance Indicators
+
+### Technical KPIs:
+- **Code Coverage**: Current: 0% | Target: 80%
+- **API Response Time**: Current: N/A | Target: <100ms p95
+- **Database Query Time**: Current: N/A | Target: <50ms
+- **Smart Contract Gas**: Current: N/A | Target: <$0.50/tx
+
+### Business KPIs:
+- **Time to MVP**: 8 weeks remaining
+- **Time to First Customer**: 12 weeks remaining
+- **Target ARR**: $10M (40 customers @ $250k ACV)
+
+## 🔄 Daily Standup Topics
+1. Database schema implementation progress
+2. Blockers or technical decisions needed
+3. Integration points to consider
+4. Testing approach
+
+## 📁 Key Resources
+- **[Detailed Roadmap](ROADMAP_AND_SPRINTS.md)** - 8-week sprint plan
+- **[Next Steps](NEXT_STEPS_STRATEGIC.md)** - Immediate action items
+- **[PRD](docs/PRD.md)** - Product requirements
+- **[Technical Roadmap](docs/TECHNICAL_ROADMAP.md)** - Original 48-week plan
+- **[Architecture](docs/ARCHITECTURE.md)** - System design
+
+## 🚦 Risk Register
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| Database schema changes | High | Medium | Comprehensive design upfront |
+| Smart contract vulnerabilities | Critical | Low | Audit before mainnet |
+| Compliance requirements change | High | Medium | Partner with experts |
+| Performance bottlenecks | Medium | Medium | Load test from day 1 |
+
+## 💻 Quick Commands
+
+### Start Development:
+```bash
+# Database work
+cd packages/database
+python create_schema.py
+alembic upgrade head
+
+# Run services
+docker-compose up -d
+pnpm dev:gateway
+
+# Run tests
+pnpm test
+```
+
+### DevAssist Session:
+```bash
+./devassist-session.sh
+# Or in Claude: /session-start
+```
+
+## 📊 Architecture Overview
 ```
 ┌─────────────────────────────────┐
 │     Client Applications         │
@@ -44,54 +127,56 @@ Build the "Plaid for tokenized funds" - AI-native distribution & compliance midd
 └────────────┬────────────────────┘
              │
 ┌────────────▼────────────────────┐
-│       Edge Proxy (Fastify)      │
+│       Gateway Service           │ ← Week 2 Focus
 │   Auth | Rate Limit | Routing   │
 └────────────┬────────────────────┘
              │
 ┌────────────▼────────────────────┐
-│    Distribution Middleware      │
-│  Universal API | Compliance     │
-│  Treasury Opt | AI Automation   │
+│     Core Services               │
+│  Identity | Policy | Audit      │ ← Week 4 Focus
 └────────────┬────────────────────┘
              │
 ┌────────────▼────────────────────┐
-│     Blockchain Services         │
-│  Oracles | Bridges | Contracts  │
+│     Blockchain Layer            │ ← Week 3 Focus
+│  ERC-3643 | Polygon | Events    │
 └────────────┬────────────────────┘
              │
 ┌────────────▼────────────────────┐
-│         Data Layer              │
+│       Data Layer                │ ← Week 1 Focus (CURRENT)
 │  PostgreSQL | Redis | Qdrant    │
 └─────────────────────────────────┘
 ```
 
-## 🎯 Current Priorities (DevAssist Tracked)
-1. **Complete integration test framework** - Get to 70% coverage
-2. **Set up CI/CD pipeline** - GitHub Actions for automated testing
-3. **Begin Web3.py integration** - Start blockchain connectivity
+## 📅 Upcoming Milestones
 
-## 💻 Development Commands
+### This Week (Week 1):
+- Complete database schema and migrations
+- Set up development seed data
+- Configure Redis caching
+- Document data models
 
-### Core Operations
-```bash
-# Start all services
-make docker-up
+### Next Week (Week 2):
+- Implement gateway authentication
+- Set up route proxying
+- Add rate limiting
+- Create API documentation
 
-# Run API server
-make api
+### Week 3:
+- Deploy first smart contract
+- Set up contract monitoring
+- Implement transfer rules
 
-# Run tests
-make test
+### Week 4:
+- Complete KYC/KYB flow
+- Integrate compliance providers
+- Security audit prep
 
-# Start DevAssist session with warm-up
-# Use /session-start in Claude
-```
-
-## 📊 DevAssist Integration
-- Warm-up enabled for 240% better tool proactivity
-- Sprint tracking active in DevAssist database
-- Session management with context preservation
-- Automated progress tracking
+## 🔔 Important Notes
+- Database schema is the critical path - blocks all other development
+- Smart contracts need early deployment for integration testing
+- Security and compliance must be built-in, not bolted-on
+- Daily commits and documentation updates required
 
 ---
-*Last updated: September 4, 2025 by DevAssist Fix Script*
+*Status updated: September 6, 2025*
+*Next update: End of Day 1 (Database schema progress)*
