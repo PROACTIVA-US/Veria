@@ -1,67 +1,207 @@
+version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
+    image: postgres:14-alpine
     container_name: veria_postgres
+    environment:
+      POSTGRES_USER: veria
+      POSTGRES_PASSWORD: veria123
+      POSTGRES_DB: veria
+      POSTGRES_HOST_AUTH_METHOD: md5
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_DB: veria
-      POSTGRES_USER: veria
-      POSTGRES_PASSWORD: veria_dev_2024
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./packages/database/init:/docker-entrypoint-initdb.d
+      - ./packages/database/schemas/core.sql:/docker-entrypoint-initdb.d/01-schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U veria"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - veria_network
 
-  api:
-    build:
-      context: .
-      dockerfile: infra/docker/compliance.Dockerfile
-    image: compliance-mw:dev
-    container_name: compliance_api
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://veria:veria_dev_2024@postgres:5432/veria
-    volumes:
-      - ./packages/compliance_middleware:/app/packages/compliance_middleware
-    command: ["uvicorn", "packages.compliance_middleware.app:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  edge:
-    build:
-      context: ./packages/edge_proxy
-    container_name: edge_proxy
-    ports:
-      - "8080:8080"
-    env_file:
-      - .env
-    command: ["node", "dist/index.js"]
-    depends_on:
-      - api
-
+  # Redis Cache
   redis:
     image: redis:7-alpine
+    container_name: veria_redis
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veria_network
 
+  # Qdrant Vector Database
   qdrant:
     image: qdrant/qdrant:latest
+    container_name: veria_qdrant
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__LOG_LEVEL: INFO
+    networks:
+      - veria_network
+
+  # Gateway Service (Week 2)
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: veria_gateway
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://veria:veria123@postgres:5432/veria
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-jwt-secret-here
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/gateway:/app
+      - /app/node_modules
+    networks:
+      - veria_network
+    profiles:
+      - services
+
+  # Identity Service (Week 4)
+  identity-service:
+    build:
+      context: ./services/identity-service
+      dockerfile: Dockerfile
+    container_name: veria_identity
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DATABASE_URL: postgresql://veria:veria123@postgres:5432/veria
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/identity-service:/app
+      - /app/node_modules
+    networks:
+      - veria_network
+    profiles:
+      - services
+
+  # Policy Service (Week 7)
+  policy-service:
+    build:
+      context: ./services/policy-service
+      dockerfile: Dockerfile
+    container_name: veria_policy
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DATABASE_URL: postgresql://veria:veria123@postgres:5432/veria
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/policy-service:/app
+      - /app/node_modules
+    networks:
+      - veria_network
+    profiles:
+      - services
+
+  # Audit Log Writer (Week 7)
+  audit-log-writer:
+    build:
+      context: ./services/audit-log-writer
+      dockerfile: Dockerfile
+    container_name: veria_audit
+    ports:
+      - "3004:3004"
+    environment:
+      NODE_ENV: development
+      PORT: 3004
+      DATABASE_URL: postgresql://veria:veria123@postgres:5432/veria
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/audit-log-writer:/app
+      - /app/node_modules
+    networks:
+      - veria_network
+    profiles:
+      - services
+
+  # Frontend (Week 5)
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: veria_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_CHAIN_ID: 80001
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - veria_network
+    profiles:
+      - frontend
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: veria_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@veria.io
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - veria_network
+    profiles:
+      - tools
 
 volumes:
   postgres_data:
+  redis_data:
   qdrant_data:
+  pgadmin_data:
+
+networks:
+  veria_network:
+    driver: bridge
