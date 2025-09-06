@@ -38,10 +38,11 @@ queen.json.bak
 *.bak.devassist.pid
 
 # DevAssist
-.devassist/data/
-.devassist/terminal_logs/
-.sessions/
+.devassist/
+.devassist.pid
+.devassist-backup/
 *.session.json
+.sessions/
 
 # Git worktrees
 .worktrees/

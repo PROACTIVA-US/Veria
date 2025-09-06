@@ -1,26 +1,20 @@
-# 🏦 Veria - Tokenized RWA Distribution Platform
+# Veria - RWA Distribution Middleware
 
-> The "Plaid for tokenized funds" - Compliance-first distribution middleware for tokenized Real World Assets, starting with treasuries and money market funds.
+## 🎯 Mission
+Build the "Plaid for tokenized funds" - AI-native distribution & compliance middleware connecting institutions to the $24B tokenized Real World Asset (RWA) market.
 
-[![Development Status](https://img.shields.io/badge/Status-Sprint%201%20of%208-yellow)](STATUS.md)
-[![MVP Timeline](https://img.shields.io/badge/MVP-8%20weeks-blue)](ROADMAP_AND_SPRINTS.md)
-[![License](https://img.shields.io/badge/License-Proprietary-red)]()
+## 🏗️ Project Overview
 
-## 🎯 Vision
+Veria is a comprehensive middleware platform that bridges traditional financial institutions with tokenized Real World Assets on the blockchain. It provides seamless integration, compliance automation, and intelligent distribution capabilities.
 
-Veria is building the critical infrastructure layer that enables traditional financial institutions to distribute tokenized RWAs efficiently and compliantly. We're solving the $24B tokenized asset market's biggest challenge: seamless, compliant distribution at scale.
+### Key Features
+- **ERC-3643 Compliance**: Full support for security token standards
+- **Multi-Chain Support**: Initially Polygon, expandable to other EVM chains
+- **AI-Powered Compliance**: Automated KYC/AML and regulatory compliance
+- **Real-Time Settlement**: Instant transaction processing and settlement
+- **Enterprise Integration**: APIs for seamless institution connectivity
 
-## 🚀 Current Development Status
-
-**Sprint 1 of 8: Database Foundation** (Week 1)
-- Building core data persistence layer
-- PostgreSQL schema implementation
-- Redis caching configuration
-- Target: Complete by Friday, Sept 13
-
-[View Detailed Roadmap →](ROADMAP_AND_SPRINTS.md)
-
-## 🏗️ Architecture
+## 🏛️ Architecture
 
 ```
 ┌─────────────────────────────────┐
@@ -35,7 +29,8 @@ Veria is building the critical infrastructure layer that enables traditional fin
              │
 ┌────────────▼────────────────────┐
 │     Core Services               │
-│  Identity | Policy | Audit      │
+│  Identity | Policy | Compliance │
+│        Audit Writer             │
 └────────────┬────────────────────┘
              │
 ┌────────────▼────────────────────┐
@@ -49,204 +44,132 @@ Veria is building the critical infrastructure layer that enables traditional fin
 └─────────────────────────────────┘
 ```
 
-## 📦 Project Structure
-
-```
-veria/
-├── apps/
-│   └── frontend/          # Next.js investor dashboard
-├── services/
-│   ├── gateway/          # API gateway (Fastify)
-│   ├── identity-service/ # KYC/KYB service
-│   ├── policy-service/   # Compliance engine
-│   └── audit-log-writer/ # Immutable audit trail
-├── packages/
-│   ├── blockchain/       # Smart contracts & Web3
-│   ├── database/        # Data models & migrations
-│   ├── compliance_middleware/
-│   └── edge_proxy/
-├── tests/
-│   ├── e2e/            # End-to-end tests
-│   └── k6/             # Performance tests
-└── docs/               # Documentation
-```
-
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- Python 3.11+
+- Node.js v20+
+- pnpm v8+
 - Docker & Docker Compose
-- PostgreSQL 14+
+- PostgreSQL 15+
 - Redis 7+
 
-### Development Setup
+### Installation
 
-1. **Clone and Install**
 ```bash
-git clone https://github.com/your-org/veria.git
-cd veria
+# Clone the repository
+git clone https://github.com/PROACTIVA-US/Veria.git
+cd Veria
+
+# Install dependencies
 pnpm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Generate Prisma client
+pnpm --filter @veria/policy-service prisma:generate
+
+# Start development services
+pnpm run dev:all
 ```
 
-2. **Start Infrastructure**
-```bash
-docker-compose up -d
+### Service Endpoints
+
+| Service | Port | Health Check |
+|---------|------|--------------|
+| Gateway | 3001 | http://localhost:3001/health |
+| Identity | 3002 | http://localhost:3002/health |
+| Policy | 3003 | http://localhost:3003/health |
+| Compliance | 3004 | http://localhost:3004/health |
+| Audit | 3005 | http://localhost:3005/health |
+| Frontend | 3000 | http://localhost:3000 |
+
+## 📂 Project Structure
+
+```
+veria/
+├── apps/               # Frontend applications
+│   └── frontend/      # Next.js admin dashboard
+├── services/          # Backend microservices
+│   ├── gateway/       # API gateway
+│   ├── identity-service/  # KYC/Identity management
+│   ├── policy-service/    # Policy engine
+│   ├── compliance-service/# Compliance checks
+│   └── audit-log-writer/  # Audit trail
+├── packages/          # Shared packages
+├── infra/            # Infrastructure configs
+├── scripts/          # Utility scripts
+├── docs/             # Documentation
+└── tests/            # Test suites
 ```
 
-3. **Set Up Database**
+## 🧪 Testing
+
 ```bash
-cd packages/database
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-alembic upgrade head
-```
-
-4. **Start Services**
-```bash
-# Terminal 1: Gateway
-pnpm dev:gateway
-
-# Terminal 2: Identity Service
-pnpm dev:identity
-
-# Terminal 3: Frontend
-pnpm dev
-```
-
-5. **Run Tests**
-```bash
+# Run all tests
 pnpm test
+
+# Run specific service tests
+pnpm --filter @veria/gateway test
+
+# Run e2e tests
+pnpm test:e2e
+
+# Run performance tests
+pnpm test:perf
 ```
 
-## 🎯 Development Roadmap
+## 🐳 Docker
 
-### Phase 1: Foundation (Weeks 1-4) 🚧 CURRENT
-- [x] Project setup and architecture
-- [ ] **Sprint 1: Database layer** ← We are here
-- [ ] Sprint 2: Gateway service
-- [ ] Sprint 3: Smart contracts
-- [ ] Sprint 4: Identity service
+```bash
+# Build all services
+docker compose build
 
-### Phase 2: Product (Weeks 5-8)
-- [ ] Sprint 5: Frontend dashboard
-- [ ] Sprint 6: Integration testing
-- [ ] Sprint 7: Compliance framework
-- [ ] Sprint 8: Production prep
+# Start all services
+docker compose up
 
-### Phase 3: Launch (Weeks 9-12)
-- [ ] Beta testing
-- [ ] Security audit
-- [ ] Customer pilot
-- [ ] Production deployment
-
-[View Detailed Sprints →](ROADMAP_AND_SPRINTS.md)
-
-## 💻 Core Features
-
-### For Issuers
-- ✅ Token issuance and management
-- ✅ Compliance rule configuration
-- ✅ Investor whitelist management
-- ✅ Distribution analytics
-
-### For Investors
-- ✅ KYC/KYB onboarding
-- ✅ Product marketplace
-- ✅ Portfolio management
-- ✅ Transaction history
-
-### For Compliance
-- ✅ Real-time monitoring
-- ✅ Automated reporting
-- ✅ Audit trail
-- ✅ Regulatory updates
-
-## 🔧 Technology Stack
-
-- **Backend**: Python (FastAPI), Node.js (Fastify)
-- **Blockchain**: Solidity, Web3.js, Polygon
-- **Frontend**: Next.js, TypeScript, TailwindCSS
-- **Database**: PostgreSQL, Redis, Qdrant
-- **Testing**: Pytest, Jest, Playwright
-- **DevOps**: Docker, Kubernetes, GitHub Actions
-
-## 📊 Key Metrics
-
-- **Target**: $10M ARR in 3-5 years
-- **Customers**: 40 enterprises @ $250k ACV
-- **Performance**: <100ms API response, <$0.50 gas per tx
-- **Reliability**: 99.9% uptime SLA
-- **Security**: OWASP ASVS L2+ compliant
-
-## 🤝 Contributing
-
-We're currently in stealth development. For partnership inquiries, please contact the team.
-
-### Development Workflow
-
-1. Check [NEXT_STEPS.md](NEXT_STEPS.md) for immediate tasks
-2. Review [STATUS.md](STATUS.md) for current sprint
-3. Follow guidelines in [CLAUDE.md](CLAUDE.md) for AI assistance
-4. Update documentation as you code
-
-### Commit Convention
-
+# Start specific service
+docker compose up gateway
 ```
-feat: Add new feature
-fix: Bug fix
-docs: Documentation update
-test: Test addition/modification
-refactor: Code refactoring
-perf: Performance improvement
-```
+
+## 📊 Current Status
+
+- **Phase**: Foundation Development
+- **Sprint**: 1 of 8
+- **Target MVP**: November 1, 2025
+- **Services**: 5/5 core services implemented
+- **Integration**: Bundle integration complete (3.5 weeks accelerated)
+
+See [STATUS.md](STATUS.md) for detailed progress updates.
 
 ## 📚 Documentation
 
-- [Product Requirements (PRD)](docs/PRD.md)
-- [Technical Architecture](docs/ARCHITECTURE.md)
-- [API Documentation](docs/API.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Testing Strategy](docs/Testing-Strategy.md)
+- [Architecture](docs/ARCHITECTURE.md) - System design and patterns
+- [API Documentation](docs/API.md) - REST API reference
+- [Database Schema](docs/DATABASE_SCHEMA.md) - Data models
+- [Roadmap](ROADMAP_AND_SPRINTS.md) - Development timeline
+- [Product Spec](docs/PRODUCT_SPEC.md) - Feature specifications
 
-## 🔐 Security
+## 🤝 Contributing
 
-- All PII encrypted at rest
-- JWT authentication with refresh tokens
-- Row-level security in database
-- Audit logging for all actions
-- Regular security audits
+This is a private repository. Team members should follow the established development workflow:
 
-## 📞 Contact & Support
-
-- **Technical Issues**: Create a GitHub issue
-- **Security Issues**: security@veria.io
-- **Business Inquiries**: partnerships@veria.io
+1. Create feature branch from `main`
+2. Implement changes with tests
+3. Submit PR for review
+4. Merge after approval
 
 ## 📄 License
 
-Copyright © 2025 Veria. All rights reserved.
+Proprietary - All Rights Reserved
 
-This is proprietary software. Unauthorized copying, modification, or distribution is strictly prohibited.
+## 🏢 About PROACTIVA
 
----
-
-## 🎯 Current Sprint Focus
-
-### Sprint 1: Database Foundation (Week 1)
-**Goal**: Complete data persistence layer
-
-**Today's Tasks**:
-- [ ] Create PostgreSQL schema
-- [ ] Implement core tables
-- [ ] Set up migrations
-- [ ] Configure Redis
-
-[View Today's Tasks →](NEXT_STEPS.md)
+PROACTIVA is building the future of tokenized asset distribution, making Real World Assets accessible to institutions worldwide through compliant, efficient, and intelligent middleware solutions.
 
 ---
 
-*Building the future of tokenized asset distribution, one sprint at a time.*
-
-**Last Updated**: September 6, 2025 | **Sprint**: 1 of 8 | **Target MVP**: November 1, 2025
+**Repository**: https://github.com/PROACTIVA-US/Veria  
+**Status**: Active Development  
+**Version**: 0.4.0
