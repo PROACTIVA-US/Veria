@@ -23,5 +23,8 @@
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter @veria/tests-e2e test",
     "test:perf": "pnpm --filter @veria/tests-k6 perf"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
   }
 }
