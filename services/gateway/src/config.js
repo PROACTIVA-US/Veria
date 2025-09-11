@@ -7,6 +7,7 @@ const EnvSchema = z.object({
   POLICY_URL: z.string().url().default('http://localhost:3003'),
   COMPLIANCE_URL: z.string().url().default('http://localhost:3004'),
   AUDIT_URL: z.string().url().default('http://localhost:3005'),
+  TOOL_MASKER_URL: z.string().url().default('http://localhost:3006'),
   CORS_ORIGINS: z.string().optional() // comma-separated
 });
 
