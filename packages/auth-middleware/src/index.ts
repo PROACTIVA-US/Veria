@@ -173,11 +173,11 @@ export async function initializeAuth(app: FastifyInstance) {
       };
       
       // Generate tokens
-      const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+      const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY } as jwt.SignOptions);
       const refreshToken = jwt.sign(
         { userId: user.id, sessionId, type: 'refresh' },
         JWT_SECRET,
-        { expiresIn: REFRESH_TOKEN_EXPIRY }
+        { expiresIn: REFRESH_TOKEN_EXPIRY } as jwt.SignOptions
       );
       
       // Store session in Redis
@@ -261,7 +261,7 @@ export async function initializeAuth(app: FastifyInstance) {
         sessionId: decoded.sessionId
       };
       
-      const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+      const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY } as jwt.SignOptions);
       
       return {
         success: true,
@@ -276,7 +276,7 @@ export async function initializeAuth(app: FastifyInstance) {
     }
   });
   
-  app.post('/auth/logout', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/auth/logout', async (request: FastifyRequest, _reply: FastifyReply) => {
     try {
       const token = request.headers.authorization?.replace('Bearer ', '');
       if (!token) {

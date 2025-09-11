@@ -1,0 +1,54 @@
+{
+  "domain": "ide",
+  "version": "0.1.0",
+  "nodeTypes": {
+    "Repo": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      }
+    },
+    "Module": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "owner": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Test": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "skip"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "edgeKinds": {
+    "depends_on": {},
+    "builds": {},
+    "deploys_to": {},
+    "triggers": {}
+  },
+  "prompts": {
+    "suggestRefactor": "Analyze modules and suggest a dependency-reducing refactor.",
+    "genTests": "Generate a set of tests for module ${moduleName}."
+  }
+}

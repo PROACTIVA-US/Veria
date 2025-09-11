@@ -1,0 +1,4 @@
+import fetch from 'node-fetch'; import { GraphSuggestOutput } from '../utils/schema.js';
+export async function suggestWithGemini(input:any){ const apiKey = process.env.GOOGLE_API_KEY; if(!apiKey) throw new Error('GOOGLE_API_KEY missing');
+const url=`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`; const body={ contents:[{ parts:[{ text:`Return ONLY JSON with nodes, edges, explanations for: ${input.prompt}` }]}] };
+const r=await fetch(url,{ method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body)}); if(!r.ok) throw new Error(`Gemini failed: ${r.status}`); const data=await r.json(); const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}"; const trimmed = raw.trim().replace(/^```json\n?|\n?```$/g,''); return GraphSuggestOutput.parse(JSON.parse(trimmed||"{}")); }

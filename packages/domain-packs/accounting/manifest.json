@@ -1,0 +1,75 @@
+{
+  "domain": "accounting",
+  "version": "1.0.0",
+  "nodeTypes": {
+    "Client": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "ein": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ein"
+        ]
+      }
+    },
+    "Engagement": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer"
+          },
+          "type": {
+            "enum": [
+              "Audit",
+              "Review",
+              "Compilation"
+            ]
+          }
+        },
+        "required": [
+          "year",
+          "type"
+        ]
+      }
+    },
+    "KYCCase": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "pending",
+              "pass",
+              "fail"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      }
+    }
+  },
+  "edgeKinds": {
+    "engages": {},
+    "complies_with": {},
+    "violates": {}
+  },
+  "prompts": {
+    "suggestOnboarding": "Create an onboarding graph for a new client in ${industry}. Include KYCCase and Engagement.",
+    "flagAml": "Inspect edges for AML risk and output violations with explanations."
+  },
+  "overlays": [
+    {
+      "id": "riskBadges",
+      "source": "policy"
+    }
+  ]
+}

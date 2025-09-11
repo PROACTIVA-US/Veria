@@ -26,6 +26,7 @@
     "test:perf": "pnpm --filter @veria/tests-k6 perf"
   },
   "dependencies": {
+    "bcrypt": "5.1.1",
     "pg": "^8.16.3"
   }
 }

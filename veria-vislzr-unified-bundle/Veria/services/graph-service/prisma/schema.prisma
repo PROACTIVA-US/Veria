@@ -1,0 +1,5 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("GRAPH_DB_URL") }
+model Node { id String @id @default(cuid()) orgId String @index type String @index label String status String? priority Int? tags String[] props Json @default("{}") createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
+model Edge { id String @id @default(cuid()) orgId String @index srcId String @index dstId String @index kind String @index props Json @default("{}") createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
+model Milestone { id String @id @default(cuid()) orgId String @index title String ts DateTime @index status String props Json @default("{}") createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }

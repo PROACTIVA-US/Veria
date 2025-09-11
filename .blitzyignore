@@ -1,0 +1,11 @@
+node_modules/
+**/node_modules/
+**/.env
+.env*
+infra/secrets/
+**/dist/
+**/.turbo/
+**/.next/
+**/build/
+**/*.log
+**/.DS_Store
