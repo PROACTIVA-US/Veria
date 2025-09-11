@@ -1,0 +1,37 @@
+tool_name: veria_treasury_yield
+description: Fetch current treasury yields for a given maturity code (masked; minimal inputs/outputs).
+handler_name: http_get
+
+input_schema:
+  type: object
+  properties:
+    maturity:
+      type: string
+      description: "Maturity code (e.g., 3M, 2Y, 10Y)"
+  required: ["maturity"]
+
+handler_input_template: |
+  {
+    "url": "https://api.example.com/treasury/yield",
+    "params": { "maturity": "{{ input.maturity }}" },
+    "headers": { "X-API-Key": "{{ env.TREASURY_API_KEY | default('demo') }}" }
+  }
+
+output_template: |
+  {
+    "data": {
+      "maturity": "{{ input.maturity }}",
+      "yield": {{ (result.yield or 0) if result is mapping and 'yield' in result else 0 }}
+    }
+  }
+
+custom_validation_template: |
+  {% set allowed = ["1M","3M","6M","1Y","2Y","5Y","10Y","20Y","30Y"] %}
+  {% if input.maturity not in allowed %}
+  {"success": false, "error": "Invalid maturity. Use one of: " + allowed | join(", ")}
+  {% else %}
+  {"success": true}
+  {% endif %}
+
+meta:
+  roles: ["finance","compliance"]

@@ -1,0 +1,35 @@
+tool_name: veria_order_subscribe_mmfs
+description: Create a subscription order for a money market fund (masked).
+handler_name: http_post
+
+input_schema:
+  type: object
+  properties:
+    account_id: { type: string }
+    fund_symbol: { type: string }
+    amount: { type: number }
+    currency: { type: string, default: "USD" }
+  required: ["account_id","fund_symbol","amount"]
+
+handler_input_template: |
+  {
+    "url": "https://broker.example.com/api/subscribe",
+    "headers": { "Authorization": "Bearer {{ env.DISTRIBUTION_API_TOKEN | default('demo') }}" },
+    "json": {
+      "account_id": "{{ input.account_id }}",
+      "fund_symbol": "{{ input.fund_symbol }}",
+      "amount": {{ input.amount }},
+      "currency": "{{ input.currency or 'USD' }}"
+    }
+  }
+
+output_template: |
+  {
+    "data": {
+      "order_id": "{{ (result.order_id if result is mapping and 'order_id' in result else 'demo-order') }}",
+      "status": "{{ (result.status if result is mapping and 'status' in result else 'submitted') }}"
+    }
+  }
+
+meta:
+  roles: ["distribution","finance"]

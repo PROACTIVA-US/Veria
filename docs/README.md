@@ -1,65 +1,83 @@
-# Veria Documentation
+# Veria Documentation Hub
 
-## 📚 Current Documentation Structure
+**Last Updated**: January 2025  
+**Status**: Active Development  
+**Sprint**: Pre-Sprint 1
 
-### Core Documents (Active)
-- **[Product Requirements (PRD)](PRD.md)** - Core product specifications
-- **[Technical Architecture](ARCHITECTURE.md)** - System design and components
-- **[Database Schema](DATABASE_SCHEMA.md)** - Current database structure
-- **[API Documentation](API.md)** - API specifications
-- **[Testing Strategy](Testing-Strategy.md)** - Testing approach and standards
+## 📚 Core Documentation
 
-### Sprint Planning (Active)
-- **[Sprint Roadmap](../ROADMAP_AND_SPRINTS.md)** - 8-week MVP plan ← **PRIMARY ROADMAP**
-- **[Current Status](../STATUS.md)** - Real-time sprint progress
-- **[Next Steps](../NEXT_STEPS.md)** - Today's tasks and priorities
-- **[Technical Roadmap](TECHNICAL_ROADMAP.md)** - Detailed 48-week plan
+### Strategic Documents
+- **[PRODUCT_REQUIREMENTS.md](./PRODUCT_REQUIREMENTS.md)** - Complete PRD with Tool Masker feature
+- **[ROADMAP.md](./ROADMAP.md)** - 15-week path to MVP from current state
+- **[SPRINT_PLAN.md](./SPRINT_PLAN.md)** - Detailed sprint-by-sprint execution plan
 
-### Implementation Guides
-- **[Implementation Guide](IMPLEMENTATION_GUIDE.md)** - Development instructions
-- **[Runbooks](RUNBOOKS.md)** - Operational procedures
-- **[Policy Schema](Policy-Schema.md)** - Compliance policy structure
+### Technical Documents
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design and component architecture
+- **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** - Real-time development status
+- **[PROJECT_ORGANIZATION.md](./PROJECT_ORGANIZATION.md)** - How to navigate and use this project
 
-### Development Support
-- **[Claude Instructions](../CLAUDE.md)** - AI assistant context
-- **[Database Package](../packages/database/README.md)** - Database documentation
-- **[Daily Notes](daily/)** - Sprint daily updates
+### Reference Documents
+- **[API.md](./API.md)** - API endpoint specifications
+- **[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)** - Database structure
+- **[Testing-Strategy.md](./Testing-Strategy.md)** - Testing approach
+- **[Policy-Schema.md](./Policy-Schema.md)** - Policy configuration format
 
-### Archived Documents
-Outdated documents have been moved to [`archive/`](archive/) to keep the project clean:
-- Old roadmaps
-- Previous data models
-- Legacy specifications
+## 🚨 Current Status
 
-## 🎯 Quick Links for Current Sprint
+**Overall Completion**: ~15%
 
-**Sprint 1: Database Foundation (Week 1)**
-- Day 1: ✅ Database schema complete
-- Day 2: 🔄 Redis caching (TODAY)
-- Day 3: ⏳ Connection optimization
-- Day 4: ⏳ Testing coverage
-- Day 5: ⏳ Documentation
+### Critical Issues
+- 🔴 Compliance Service has NO implementation (0%)
+- 🔴 Audit Service missing required endpoints
+- 🔴 Policy Service not connected to database
+- 🔴 No test coverage (<5%)
 
-## 📊 Documentation Standards
+### What's Working
+- ✅ Gateway Service (90% complete)
+- ✅ Database schema designed
+- ✅ Docker infrastructure ready
+- ✅ Tool Masker configurations defined
 
-### When Creating New Docs:
-1. Use clear, descriptive names
-2. Include date in header
-3. Link to related documents
-4. Update this README
+## 🎯 Quick Start for Developers
 
-### When Updating Docs:
-1. Update version/date in header
-2. Note changes in commit
-3. Archive old versions if major changes
-4. Update cross-references
+### First Time Setup
+1. Read **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** to understand current state
+2. Review **[SPRINT_PLAN.md](./SPRINT_PLAN.md)** for immediate tasks
+3. Check **[PROJECT_ORGANIZATION.md](./PROJECT_ORGANIZATION.md)** for workflow
 
-### When Archiving:
-1. Move to `archive/` folder
-2. Add `_old` or date suffix
-3. Create pointer file if needed
-4. Update this README
+### Daily Development
+1. Check current sprint tasks in **[SPRINT_PLAN.md](./SPRINT_PLAN.md)**
+2. Update progress in **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)**
+3. Reference **[ARCHITECTURE.md](./ARCHITECTURE.md)** for system design
+
+## 📊 Development Metrics
+
+| Metric | Current | Target | Status |
+|--------|---------|--------|--------|
+| Services Working | 1/5 | 5/5 | 🔴 Critical |
+| Test Coverage | <5% | 80% | 🔴 Critical |
+| API Endpoints | 8/25 | 25/25 | 🟡 In Progress |
+| Database Connected | 0/5 | 5/5 | 🔴 Critical |
+
+## 🚀 Next Immediate Actions
+
+### Day 1 (CRITICAL)
+1. Create Compliance Service implementation
+2. Fix Audit Service read endpoints
+3. Fix Policy Service routes
+
+### Day 2-3
+1. Connect services to PostgreSQL
+2. Set up Redis caching
+3. Create test infrastructure
+4. Write unit tests (40% coverage)
+
+## 📁 Documentation Archive
+
+Outdated documentation has been archived in `/docs/archive/legacy_docs/`:
+- Old PRD versions (PRD.md, PRD_v2.md)
+- Previous roadmaps and status files
+- Legacy implementation guides
 
 ---
-*Last updated: September 7, 2025*
-*Sprint 1, Day 2*
+*This documentation hub provides centralized access to all Veria project documentation. Start with IMPLEMENTATION_STATUS.md to understand current state.*

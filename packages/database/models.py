@@ -11,9 +11,10 @@ from enum import Enum as PyEnum
 
 from sqlalchemy import (
     Column, String, Integer, Boolean, DateTime, Date, 
-    DECIMAL, UUID, ForeignKey, JSON, Text, INET, 
+    DECIMAL, ForeignKey, JSON, Text,
     UniqueConstraint, CheckConstraint, Index, BigInteger
 )
+from sqlalchemy.dialects.postgresql import UUID, INET
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
@@ -106,7 +107,7 @@ class Organization(Base):
     kyb_status = Column(String(50), default='pending')
     kyb_completed_at = Column(DateTime)
     kyb_expires_at = Column(DateTime)
-    metadata = Column(JSONB, default={})
+    meta_data = Column('metadata', JSONB, default={})
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
@@ -139,7 +140,7 @@ class User(Base):
     accreditation_expires_at = Column(DateTime)
     is_active = Column(Boolean, default=True)
     last_login_at = Column(DateTime)
-    metadata = Column(JSONB, default={})
+    meta_data = Column('metadata', JSONB, default={})
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
@@ -183,7 +184,7 @@ class Product(Base):
     maturity_date = Column(Date)
     is_active = Column(Boolean, default=True)
     compliance_rules = Column(JSONB, default={})
-    metadata = Column(JSONB, default={})
+    meta_data = Column('metadata', JSONB, default={})
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
@@ -280,7 +281,7 @@ class Transaction(Base):
     price_per_token = Column(DECIMAL(20, 8))
     fee_amount = Column(DECIMAL(20, 8))
     gas_fee = Column(DECIMAL(20, 8))
-    metadata = Column(JSONB, default={})
+    meta_data = Column('metadata', JSONB, default={})
     initiated_at = Column(DateTime, server_default=func.now())
     confirmed_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())
@@ -359,7 +360,7 @@ class AuditLog(Base):
     user_agent = Column(Text)
     action = Column(String(50), nullable=False)
     changes = Column(JSONB)
-    metadata = Column(JSONB, default={})
+    meta_data = Column('metadata', JSONB, default={})
     created_at = Column(DateTime, server_default=func.now())
     
     # Relationships
@@ -408,7 +409,7 @@ class Notification(Base):
     subject = Column(String(255))
     content = Column(Text)
     status = Column(String(50), default='pending')
-    metadata = Column(JSONB, default={})
+    meta_data = Column('metadata', JSONB, default={})
     sent_at = Column(DateTime)
     read_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())

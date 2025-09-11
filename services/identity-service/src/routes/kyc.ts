@@ -1,8 +1,34 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requirePermission, Permission } from '../auth/rbac.js';
-import { kycProviderManager } from '../../kyc-provider/src/manager.js';
-import { KYCLevel, KYCStatus } from '../../kyc-provider/src/types.js';
+// Mock KYC provider for Sprint 0
+const kycProviderManager = {
+  providers: new Map(),
+  getProvider: () => ({
+    initiateKYC: async (userId: string, level: string) => ({ 
+      sessionId: `kyc-session-${Date.now()}`,
+      status: 'pending',
+      userId,
+      level 
+    }),
+    uploadDocument: async () => ({ success: true }),
+    getStatus: async () => ({ status: 'pending', details: {} }),
+    performScreening: async () => ({ passed: true, details: {} })
+  })
+};
+
+enum KYCLevel {
+  BASIC = 'basic',
+  STANDARD = 'standard',
+  ENHANCED = 'enhanced'
+}
+
+enum KYCStatus {
+  PENDING = 'pending',
+  IN_PROGRESS = 'in_progress',
+  VERIFIED = 'verified',
+  FAILED = 'failed'
+}
 import { randomUUID } from 'crypto';
 
 // Request schemas

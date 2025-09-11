@@ -2,68 +2,228 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10'
 
 jobs:
-  test:
+  lint-and-type-check:
+    name: Lint and Type Check
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Type check
+        run: pnpm typecheck
+      
+      - name: Lint
+        run: pnpm lint
+        continue-on-error: true
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: veria
+          POSTGRES_PASSWORD: veria123
+          POSTGRES_DB: veria_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build packages first
+        run: pnpm run build:packages || true
+        
+      - name: Initialize database
+        run: |
+          PGPASSWORD=veria123 psql -h localhost -U veria -d veria_test -f infra/database/schema.sql || true
+          PGPASSWORD=veria123 psql -h localhost -U veria -d veria_test -f infra/database/seed.sql || true
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: veria
+          POSTGRES_PASSWORD: veria123
+          POSTGRES_DB: veria_test
+      
+      - name: Run unit tests
+        run: pnpm test
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: veria
+          POSTGRES_PASSWORD: veria123
+          POSTGRES_DB: veria_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+      
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: veria
+          POSTGRES_PASSWORD: veria123
+          POSTGRES_DB: veria_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/coverage/
+            **/test-results/
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint-and-type-check]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build services
+        run: pnpm build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            services/*/dist/
+            packages/*/dist/
+            apps/*/dist/
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     strategy:
       matrix:
         service:
           - gateway
+          - identity-service
           - policy-service
           - compliance-service
-          - identity-service
           - audit-log-writer
-
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          version: 8
-
-      - uses: actions/setup-node@v3
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
-          node-version: 20
-          cache: 'pnpm'
+          context: .
+          file: ./services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:latest
+            ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ github.sha }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}/${{ matrix.service }}:buildcache,mode=max
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Type check ${{ matrix.service }}
-        run: pnpm --filter @veria/${{ matrix.service }} typecheck
-        continue-on-error: true
-
-      - name: Test ${{ matrix.service }}
-        run: pnpm --filter @veria/${{ matrix.service }} test
-        continue-on-error: true
-
-  frontend:
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
+      
       - uses: pnpm/action-setup@v2
         with:
-          version: 8
-
-      - uses: actions/setup-node@v3
+          version: ${{ env.PNPM_VERSION }}
+      
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-
+      
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Type check frontend
-        run: pnpm --filter @veria/frontend typecheck
+      
+      - name: Run security audit
+        run: pnpm audit --audit-level=moderate
         continue-on-error: true
-
-      - name: Build frontend
-        run: pnpm --filter @veria/frontend build
-        continue-on-error: true
+      
+      - name: Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'

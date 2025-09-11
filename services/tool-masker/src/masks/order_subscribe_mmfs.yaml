@@ -1,0 +1,151 @@
+id: order_subscribe_mmfs
+name: Money Market Fund Subscription
+description: Subscribe to institutional money market funds (BUIDL, Ondo, etc.)
+category: trading
+permissions:
+  - transaction:create
+  - portfolio:write
+
+rateLimit:
+  requests: 50
+  window: 60
+
+inputs:
+  fund_id:
+    type: string
+    required: true
+    enum: [BUIDL, OUSG, USDY, USDC]
+    description: Fund identifier
+  
+  amount:
+    type: number
+    required: true
+    minimum: 1000
+    maximum: 10000000
+    description: Subscription amount in USD
+  
+  currency:
+    type: string
+    default: USD
+    enum: [USD, USDC, USDT]
+    description: Payment currency
+  
+  wallet_address:
+    type: string
+    pattern: '^0x[a-fA-F0-9]{40}$'
+    required: true
+    description: Ethereum wallet address
+  
+  payment_method:
+    type: string
+    enum: [wire, ach, stablecoin]
+    default: stablecoin
+    description: Payment method
+  
+  portfolio_id:
+    type: string
+    required: true
+    description: Portfolio to allocate shares
+
+outputs:
+  order_id:
+    type: string
+    description: Unique order identifier
+  
+  status:
+    type: string
+    enum: [pending, processing, completed, failed]
+    description: Order status
+  
+  estimated_shares:
+    type: number
+    description: Estimated shares to receive
+  
+  nav_price:
+    type: number
+    description: Net Asset Value per share
+  
+  settlement_date:
+    type: string
+    format: date-time
+    description: Expected settlement date
+  
+  blockchain_tx:
+    type: object
+    properties:
+      hash:
+        type: string
+      block:
+        type: number
+      confirmations:
+        type: number
+    description: Blockchain transaction details
+  
+  fees:
+    type: object
+    properties:
+      management:
+        type: number
+      transaction:
+        type: number
+      total:
+        type: number
+    description: Fee breakdown
+
+template: 'Subscribe ${{amount}} {{currency}} to {{fund_id}} fund'
+
+providers:
+  primary:
+    type: api
+    endpoint: ${FUND_PROVIDER_URL}/api/v1/subscribe
+    apiKey: ${FUND_API_KEY}
+    method: POST
+    body:
+      fund: '{{fund_id}}'
+      amount: '{{amount}}'
+      currency: '{{currency}}'
+      wallet: '{{wallet_address}}'
+      portfolio: '{{portfolio_id}}'
+    transform: |
+      {
+        order_id: response.data.orderId,
+        status: response.data.status,
+        estimated_shares: response.data.shares,
+        nav_price: response.data.nav,
+        settlement_date: response.data.settlementDate,
+        blockchain_tx: response.data.transaction,
+        fees: response.data.fees
+      }
+  
+  fallback:
+    type: mock
+    mockResponse:
+      order_id: 'ORD_${timestamp}'
+      status: processing
+      estimated_shares: '{{amount}}'
+      nav_price: 1.0001
+      settlement_date: '${T+2}'
+      blockchain_tx:
+        hash: '0x${random_hex}'
+        block: null
+        confirmations: 0
+      fees:
+        management: 0.0015
+        transaction: 10
+        total: 10.0015
+
+validation:
+  preCheck:
+    - User must be KYC verified
+    - User must be accredited investor
+    - Wallet must be whitelisted
+  postCheck:
+    - Order value must match amount
+    - Settlement date must be valid
+
+webhooks:
+  onStatusChange: ${WEBHOOK_URL}/orders/status
+  onSettlement: ${WEBHOOK_URL}/orders/settled
+
+cache:
+  enabled: false  # Don't cache trading operations

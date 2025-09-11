@@ -1,0 +1,196 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+
+env:
+  KUBE_NAMESPACE: veria-production
+  HELM_CHART_PATH: ./infra/helm/veria
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name veria-staging --region us-east-1
+      
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/gateway gateway=${{ steps.login-ecr.outputs.registry }}/veria/gateway:${{ github.sha }} -n veria-staging
+          kubectl set image deployment/identity-service identity-service=${{ steps.login-ecr.outputs.registry }}/veria/identity-service:${{ github.sha }} -n veria-staging
+          kubectl set image deployment/policy-service policy-service=${{ steps.login-ecr.outputs.registry }}/veria/policy-service:${{ github.sha }} -n veria-staging
+          kubectl set image deployment/compliance-service compliance-service=${{ steps.login-ecr.outputs.registry }}/veria/compliance-service:${{ github.sha }} -n veria-staging
+          kubectl set image deployment/audit-log-writer audit-log-writer=${{ steps.login-ecr.outputs.registry }}/veria/audit-log-writer:${{ github.sha }} -n veria-staging
+      
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/gateway -n veria-staging
+          kubectl rollout status deployment/identity-service -n veria-staging
+          kubectl rollout status deployment/policy-service -n veria-staging
+          kubectl rollout status deployment/compliance-service -n veria-staging
+          kubectl rollout status deployment/audit-log-writer -n veria-staging
+      
+      - name: Run smoke tests
+        run: |
+          STAGING_URL=${{ secrets.STAGING_URL }}
+          curl -f ${STAGING_URL}/health || exit 1
+          curl -f ${STAGING_URL}/identity/health || exit 1
+          curl -f ${STAGING_URL}/audit/health || exit 1
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [deploy-staging]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: us-east-1
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name veria-production --region us-east-1
+      
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install veria ${{ env.HELM_CHART_PATH }} \
+            --namespace ${{ env.KUBE_NAMESPACE }} \
+            --create-namespace \
+            --set image.tag=${{ github.ref_name }} \
+            --set environment=production \
+            --set gateway.replicas=3 \
+            --set identityService.replicas=2 \
+            --set policyService.replicas=2 \
+            --set complianceService.replicas=2 \
+            --set auditLogWriter.replicas=2 \
+            --set postgresql.enabled=false \
+            --set postgresql.host=${{ secrets.PROD_DB_HOST }} \
+            --set postgresql.auth.username=${{ secrets.PROD_DB_USER }} \
+            --set postgresql.auth.password=${{ secrets.PROD_DB_PASSWORD }} \
+            --set redis.enabled=false \
+            --set redis.host=${{ secrets.PROD_REDIS_HOST }} \
+            --set redis.auth.password=${{ secrets.PROD_REDIS_PASSWORD }} \
+            --wait \
+            --timeout 10m
+      
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n ${{ env.KUBE_NAMESPACE }}
+          kubectl get services -n ${{ env.KUBE_NAMESPACE }}
+      
+      - name: Run production smoke tests
+        run: |
+          PROD_URL=${{ secrets.PRODUCTION_URL }}
+          curl -f ${PROD_URL}/health || exit 1
+          curl -f ${PROD_URL}/identity/health || exit 1
+          curl -f ${PROD_URL}/audit/health || exit 1
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: |
+            ./dist/*.tar.gz
+            ./dist/*.zip
+
+  rollback:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    if: failure() && needs.deploy-production.result == 'failure'
+    needs: [deploy-production]
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: us-east-1
+      
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name veria-production --region us-east-1
+      
+      - name: Rollback deployments
+        run: |
+          kubectl rollout undo deployment/gateway -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout undo deployment/identity-service -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout undo deployment/policy-service -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout undo deployment/compliance-service -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout undo deployment/audit-log-writer -n ${{ env.KUBE_NAMESPACE }}
+      
+      - name: Wait for rollback
+        run: |
+          kubectl rollout status deployment/gateway -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout status deployment/identity-service -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout status deployment/policy-service -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout status deployment/compliance-service -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout status deployment/audit-log-writer -n ${{ env.KUBE_NAMESPACE }}
+      
+      - name: Notify rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "⚠️ Production deployment rolled back",
+              attachments: [{
+                color: 'warning',
+                text: `Deployment of ${process.env.GITHUB_REF} was rolled back due to failure`
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,115 @@
+id: treasury_yield
+name: US Treasury Yield Rates
+description: Get current and historical US Treasury yield rates
+category: market_data
+permissions:
+  - market:read
+
+rateLimit:
+  requests: 1000
+  window: 60
+
+inputs:
+  maturity:
+    type: string
+    required: true
+    enum: [1M, 3M, 6M, 1Y, 2Y, 3Y, 5Y, 7Y, 10Y, 20Y, 30Y]
+    description: Treasury maturity period
+  
+  date:
+    type: string
+    format: date
+    description: Specific date for historical data (YYYY-MM-DD)
+  
+  comparison_period:
+    type: string
+    enum: [1D, 1W, 1M, 3M, 6M, 1Y]
+    default: 1D
+    description: Period for yield change comparison
+
+outputs:
+  yield:
+    type: number
+    description: Current yield percentage
+  
+  date:
+    type: string
+    format: date
+    description: Date of the yield data
+  
+  change:
+    type: number
+    description: Change from comparison period
+  
+  change_percentage:
+    type: number
+    description: Percentage change
+  
+  historical:
+    type: array
+    items:
+      type: object
+      properties:
+        date:
+          type: string
+        yield:
+          type: number
+    description: Historical yield data points
+  
+  metadata:
+    type: object
+    properties:
+      source:
+        type: string
+      updated_at:
+        type: string
+      next_update:
+        type: string
+
+template: 'US Treasury {{maturity}} yield as of {{date}}'
+
+providers:
+  primary:
+    type: api
+    endpoint: https://api.treasurydirect.gov/TA_WS/securities/search
+    method: GET
+    queryParams:
+      type: Bill
+      maturityDate: '{{date}}'
+      format: json
+    transform: |
+      {
+        yield: response.data[0].interestRate,
+        date: response.data[0].issueDate,
+        change: calculateChange(response.data),
+        change_percentage: calculateChangePercentage(response.data),
+        historical: response.data.slice(0, 10),
+        metadata: {
+          source: 'Treasury Direct',
+          updated_at: new Date().toISOString(),
+          next_update: getNextUpdateTime()
+        }
+      }
+  
+  fallback:
+    type: api
+    endpoint: https://api.fred.stlouisfed.org/fred/series/observations
+    apiKey: ${FRED_API_KEY}
+    queryParams:
+      series_id: 'DGS{{maturity}}'
+      limit: 1
+      sort_order: desc
+      file_type: json
+
+cache:
+  enabled: true
+  ttl: 900  # Cache for 15 minutes
+  keyPattern: 'treasury:{{maturity}}:{{date}}'
+
+validation:
+  preCheck:
+    - Market must be open
+    - Date cannot be future
+  postCheck:
+    - Yield must be positive
+    - Data must be less than 24 hours old
