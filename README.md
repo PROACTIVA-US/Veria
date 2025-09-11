@@ -3,6 +3,12 @@
 ## 🎯 Mission
 Build the "Plaid for tokenized funds" - AI-native distribution & compliance middleware connecting institutions to the $24B tokenized Real World Asset (RWA) market.
 
+## 📊 Current Status
+**Version**: 0.4.0  
+**Phase**: Sprint 0 - Cleanup & Foundation  
+**Completion**: ~40%  
+**Target MVP**: November 1, 2025
+
 ## 🏗️ Project Overview
 
 Veria is a comprehensive middleware platform that bridges traditional financial institutions with tokenized Real World Assets on the blockchain. It provides seamless integration, compliance automation, and intelligent distribution capabilities.
@@ -13,6 +19,15 @@ Veria is a comprehensive middleware platform that bridges traditional financial 
 - **AI-Powered Compliance**: Automated KYC/AML and regulatory compliance
 - **Real-Time Settlement**: Instant transaction processing and settlement
 - **Enterprise Integration**: APIs for seamless institution connectivity
+
+### 📈 Development Progress
+- ✅ Core service architecture implemented
+- ✅ Basic authentication system
+- ✅ Gateway routing operational
+- 🔄 Database integration in progress
+- 🔄 Compliance engine development
+- ⏳ Blockchain integration pending
+- ⏳ Frontend dashboard pending
 
 ## 🏛️ Architecture
 
@@ -133,15 +148,11 @@ docker compose up
 docker compose up gateway
 ```
 
-## 📊 Current Status
+## 📊 Development Status
 
-- **Phase**: Foundation Development
-- **Sprint**: 1 of 8
-- **Target MVP**: November 1, 2025
-- **Services**: 5/5 core services implemented
-- **Integration**: Bundle integration complete (3.5 weeks accelerated)
-
-See [STATUS.md](STATUS.md) for detailed progress updates.
+See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current state assessment.  
+See [ROADMAP_2025.md](ROADMAP_2025.md) for complete development roadmap.  
+See [SPRINT_0_CLEANUP.md](SPRINT_0_CLEANUP.md) for immediate action items.
 
 ## 📚 Documentation
 
