@@ -1,0 +1,154 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: us-central1
+  SERVICE_NAME: veria-api
+  ARTIFACT_REGISTRY: veria-registry
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run tests
+        run: pnpm test
+      
+      - name: Run linting
+        run: pnpm lint
+      
+      - name: Type check
+        run: pnpm typecheck
+  
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || 'dev' }}
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set environment variables
+        run: |
+          if [[ "${{ github.event.inputs.environment || 'auto' }}" == "production" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "MIN_INSTANCES=1" >> $GITHUB_ENV
+            echo "MAX_INSTANCES=10" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.environment || 'auto' }}" == "staging" ]] || [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "MIN_INSTANCES=0" >> $GITHUB_ENV
+            echo "MAX_INSTANCES=5" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "MIN_INSTANCES=0" >> $GITHUB_ENV
+            echo "MAX_INSTANCES=3" >> $GITHUB_ENV
+          fi
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Configure Docker to use gcloud as credential helper
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+      
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          docker build -t $IMAGE_TAG .
+          echo "IMAGE_URL=$IMAGE_TAG" >> $GITHUB_ENV
+      
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_URL }}
+      
+      - name: Deploy to Cloud Run
+        run: |
+          # Substitute environment variables in cloudrun.yaml
+          envsubst < cloudrun.yaml > cloudrun-processed.yaml
+          
+          # Deploy the service
+          gcloud run services replace cloudrun-processed.yaml \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+          
+          # Allow unauthenticated access for public API
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker" \
+            --project=${{ env.GCP_PROJECT_ID }}
+      
+      - name: Get Cloud Run URL
+        id: get-url
+        run: |
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.GCP_REGION }} \
+            --project=${{ env.GCP_PROJECT_ID }} \
+            --format="value(status.url)")
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "### Deployed to Cloud Run" >> $GITHUB_STEP_SUMMARY
+          echo "URL: $SERVICE_URL" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Verify deployment
+        run: |
+          sleep 10
+          curl -f ${{ steps.get-url.outputs.service_url }}/health || exit 1
+      
+      - name: Comment PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### 🚀 Backend Deployed to Cloud Run!\n\n**URL:** ${{ steps.get-url.outputs.service_url }}\n**Environment:** ${{ env.ENVIRONMENT }}\n**Min Instances:** ${{ env.MIN_INSTANCES }}\n**Max Instances:** ${{ env.MAX_INSTANCES }}`
+            })

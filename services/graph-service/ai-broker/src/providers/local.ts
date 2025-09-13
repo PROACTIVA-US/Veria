@@ -1,2 +1,0 @@
-import { GraphSuggestOutput } from '../utils/schema.js';
-export async function suggestWithLocal(_input:any){ return GraphSuggestOutput.parse({ nodes:[{type:'Issuer',label:'Demo Issuer'},{type:'Investor',label:'Demo Investor'},{type:'Policy',label:'KYC/AML'}], edges:[{srcId:'1',dstId:'2',kind:'subscribes'},{srcId:'2',dstId:'3',kind:'complies_with'}], explanations:['Local fallback produced a minimal valid graph.'] }); }

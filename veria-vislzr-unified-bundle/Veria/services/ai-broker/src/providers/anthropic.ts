@@ -1,4 +1,0 @@
-import fetch from 'node-fetch'; import { GraphSuggestOutput } from '../utils/schema.js';
-export async function suggestWithAnthropic(input:any){ const apiKey = process.env.ANTHROPIC_API_KEY; if(!apiKey) throw new Error('ANTHROPIC_API_KEY missing');
-const r = await fetch('https://api.anthropic.com/v1/messages',{ method:'POST', headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json'}, body:JSON.stringify({ model:process.env.ANTHROPIC_MODEL||'claude-3-haiku-20240307', max_tokens:2048, messages:[{role:'user',content:`Return ONLY JSON with nodes, edges, explanations for: ${input.prompt}`}] }) });
-if(!r.ok) throw new Error(`Anthropic failed: ${r.status}`); const data = await r.json(); const raw = data.content?.[0]?.text || "{}"; return GraphSuggestOutput.parse(JSON.parse(raw)); }

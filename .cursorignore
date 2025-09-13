@@ -1,0 +1,48 @@
+# Cursor ignore file - prevents indexing of problematic directories
+
+# Worktrees (git worktrees can cause confusion with duplicate packages)
+.worktrees/
+**/.worktrees/**
+
+# Node modules (always exclude these)
+node_modules/
+**/node_modules/**
+
+# Build outputs
+dist/
+**/dist/**
+.next/
+**/.next/**
+build/
+**/build/**
+
+# Cache directories
+.cache/
+**/.cache/**
+.turbo/
+**/.turbo/**
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.backup
+*~
+
+# Large binary files
+*.node
+*.wasm
+
+# Test coverage
+coverage/
+**/coverage/**
+
+# Environment files (for security)
+.env.local
+.env.production
+
+# Bundle directories that might have duplicates
+veria-vislzr-unified-bundle/
+bundles/
+
+# Archive directories
+Archive/

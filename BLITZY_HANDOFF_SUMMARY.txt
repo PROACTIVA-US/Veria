@@ -1,0 +1,87 @@
+VERIA PROJECT - BLITZY HANDOFF SUMMARY
+=======================================
+
+Repository: /Users/danielconnolly/Projects/Veria
+Date Prepared: $(date)
+
+TECHNOLOGY STACK (Blitzy-Compatible):
+--------------------------------------
+✅ TypeScript (primary language)
+✅ Node.js (backend runtime)
+✅ Next.js 14 (frontend framework)
+✅ React 18 (UI library)
+✅ PostgreSQL + Prisma (database)
+✅ Express (API framework)
+✅ pnpm (package manager - monorepo)
+
+PROJECT STRUCTURE:
+------------------
+/apps
+  /compliance-dashboard     # Next.js frontend
+/services
+  /ai-broker               # AI integration service
+  /audit-log-writer        # Audit logging
+  /blockchain-service      # Blockchain integration
+  /compliance-service      # Compliance engine
+  /gateway                 # API gateway
+  /graph-service          # Graph database
+  /identity-service       # Identity management
+  /kyc-provider          # KYC/KYB integration
+  /policy-service        # Policy engine
+  /regulatory-reporting  # Reporting service
+  /tool-masker          # Data masking
+/packages
+  /auth-middleware       # Shared auth
+  /database             # Database utilities
+  /edge_proxy          # Edge proxy
+  /sdk-ts             # TypeScript SDK
+/contracts             # Smart contracts
+/tests
+  /e2e                # End-to-end tests
+  /k6                 # Performance tests
+
+KEY FEATURES FOR BLITZY:
+------------------------
+1. Onboarding Wizard (Asset → Custody → SPV/Trust → Tokenization → Investor Registry → Evidence)
+2. Evidence management and export (ZIP + manifest, signed URLs)
+3. Investor registry with eligibility, KYC/KYB integration
+4. Tokenization adapter with jurisdictional transfer rules
+5. Compliance-first middleware architecture
+
+FILES CLEANED:
+--------------
+- Removed all node_modules directories
+- Removed all build artifacts (.next, dist, build)
+- Removed temporary files
+- Removed duplicate nested service directories
+- Removed git worktrees
+- Removed archive and bundle directories
+
+BLITZY IMPORT CHECKLIST:
+------------------------
+[ ] Push to GitHub
+[ ] Connect Blitzy to repository
+[ ] Review auto-generated Tech Spec
+[ ] Edit/approve Tech Spec
+[ ] Use structured prompts (WHY/WHAT/HOW format)
+[ ] Review generated code (~80% completion expected)
+[ ] Complete human engineering tasks
+
+HUMAN ENGINEERING TASKS (Expected):
+------------------------------------
+- Security audit and penetration testing
+- Production deployment configuration
+- Third-party API credentials setup
+- Legal/compliance review of smart contracts
+- Performance optimization and monitoring
+
+PROMPT TEMPLATE FOR BLITZY:
+---------------------------
+WHY: Enhance Veria's compliance-first middleware for tokenized assets
+WHAT: [Specific feature requirements]
+HOW: Use existing TypeScript/Node.js services, Next.js frontend
+
+CONTACT:
+--------
+Last Updated: $(date)
+Ready for Blitzy: YES
