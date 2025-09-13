@@ -1,9 +1,0 @@
-
-image:
-  repository: compliance-mw
-  tag: dev
-  pullPolicy: IfNotPresent
-
-service:
-  type: ClusterIP
-  port: 8000
