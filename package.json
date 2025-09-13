@@ -24,8 +24,7 @@
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter @veria/tests-e2e test",
     "test:perf": "pnpm --filter @veria/tests-k6 perf",
-    "schema:check": "node scripts/validate-tool-schemas.mjs",
-    "prepare": "husky"
+    "schema:check": "node scripts/validate-tool-schemas.mjs"
   },
   "dependencies": {
     "bcrypt": "5.1.1",
