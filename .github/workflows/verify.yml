@@ -1,0 +1,14 @@
+name: Verify Veria Structure
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make scripts executable
+        run: chmod +x scripts/verify-structure.sh || true
+      - name: Verify structure and sprint1
+        run: ./scripts/verify-structure.sh

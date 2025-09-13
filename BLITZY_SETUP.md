@@ -1,50 +1,44 @@
-# Veria Setup Instructions
+# BLITZY_SETUP
 
-## Install Dependencies
-```bash
-npm install -g pnpm
-pnpm install
-```
+## Purpose
+These are the instructions for Blitzy (build orchestrator) to initialize, scaffold, and iterate on Veria.
 
-## Database Setup
-```bash
-createdb veria_dev
-cd packages/database
-pnpm prisma migrate dev
-pnpm prisma generate
-cd ../..
-```
+## Read order (required)
+1. `PRD.md` (root) — master index and global Definition of Done
+2. `/docs/prds/*.md` — all module PRDs
+3. `/docs/roadmap.md` — sprint plan / phases (source of truth for sequence)
+4. `/docs/checklist.md` — living progress tracker (create if missing)
 
-## Environment Setup
-```bash
-cp .env.example .env
-```
+## Required scaffold (root-level directories)
+- `/connectors/quickbooks`
+- `/dashboard`
+- `/tax-engine`
+- `/api-gateway`
 
-## Build Project
-```bash
-pnpm run build:packages
-pnpm run build
-```
+Each must include:
+- `README.md` summarizing the module and linking to its PRD
+- A working scaffold that builds locally
+- API route stubs matching the PRD
 
-## Run Development
-```bash
-pnpm run dev
-```
+## Sprint 1 (implement now)
+- **QuickBooks Connector MVP**
+  - OAuth flow (stub ok; use mock keys)
+  - Chart of Accounts mapping
+  - Mock transaction import + reconciliation export (CSV/PDF)
+- **Compliance Dashboard scaffold**
+  - Next.js app + basic pages
+  - Placeholders for portfolio, compliance status, export button
 
-## Service Ports
-- Frontend: http://localhost:3000
-- API Gateway: http://localhost:4000
-- Services run on ports 4001-4005
+## Repo hygiene
+- Remove/retire any duplicate/outdated docs, scripts, and local tools not referenced in `PRD.md` or `/docs/roadmap.md` (e.g., husky) **unless** required by generated scaffolds.
+- Ensure naming is consistent across modules.
 
-## Tech Stack
-- Node.js 18+, TypeScript
-- Next.js 14 (frontend)
-- PostgreSQL, Prisma ORM
-- pnpm monorepo
+## Verification (CI-lite)
+- For each module:
+  - Add `npm run dev` (or equivalent) sanity check
+  - Ensure type checks / linters pass
+- Update `/docs/checklist.md` on completion of each subtask
 
-## Notes
-- This is a monorepo using pnpm workspaces
-- Frontend is in /apps/compliance-dashboard
-- Backend services in /services/*
-- Build packages before services
-- All services connect through the Gateway
+## Outputs
+- Updated repo with scaffolded modules matching PRDs
+- Updated `/docs/checklist.md` with Sprint 1 progress
