@@ -8,5 +8,7 @@
   "ciServiceAccount": "veria-automation@veria-dev.iam.gserviceaccount.com",
   "ghSecrets": ["GCP_PROJECT_ID", "GCP_SA_EMAIL", "WORKLOAD_IDENTITY_PROVIDER"],
   "triggers": ["push:main", "tag:v*.*.*"],
-  "deployByDigest": true
+  "deployByDigest": true,
+  "publicAccess": false,
+  "auth": "id-token"
 }

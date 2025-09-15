@@ -66,19 +66,20 @@
     --format='table(timestamp,severity,textPayload)'
   ```
 
-## Testing (if service is public)
+## Testing (ID-token required)
 
-- [ ] Test health endpoint:
+- [ ] `--no-allow-unauthenticated` present in deploy step
+- [ ] Grant `roles/run.invoker` **only** to required principals (users/SAs)
+- [ ] ID-token smoke test succeeded using the commands below:
   ```bash
-  SERVICE_URL=$(gcloud run services describe ai-broker --region=us-central1 --format='value(status.url)')
-  curl -sSf "$SERVICE_URL/health"
-  ```
-
-- [ ] Test API endpoint:
-  ```bash
-  curl -sSf -X POST "$SERVICE_URL/ai/graph/suggest" \
-    -H 'Content-Type: application/json' \
-    -d '{"prompt":"test","provider":"local"}'
+  SERVICE=ai-broker
+  REGION=us-central1
+  gcloud config set project veria-dev
+  URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
+  IDT=$(gcloud auth print-identity-token --audiences="$URL")
+  curl -sSf -H "Authorization: Bearer $IDT" "$URL"/ || true
+  curl -sSf -H "Authorization: Bearer $IDT" -H 'content-type: application/json' \
+    -d '{"prompt":"hello"}' "$URL"/suggest || true
   ```
 
 ## Rollback Plan
@@ -101,13 +102,13 @@
 
 - [ ] CD workflow completes successfully
 - [ ] New Cloud Run revision is serving 100% traffic
-- [ ] Health check returns 200 OK (if public)
+- [ ] ID-token authenticated health check returns 200 OK
 - [ ] No errors in Cloud Logging
-- [ ] Service responds to requests (if public)
+- [ ] Service responds to authenticated requests
 
 ## Notes
 
 - All deployments use OIDC/WIF (no JSON keys)
 - Images are deployed by digest only
-- Service is private by default (requires authentication)
-- To make public: Add allUsers with roles/run.invoker
+- **Private-only**: org policy prohibits unauthenticated access
+- Service requires ID-token authentication for all requests

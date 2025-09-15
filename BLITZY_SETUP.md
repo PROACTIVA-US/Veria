@@ -80,29 +80,23 @@ SERVICE_URL=$(gcloud run services describe ai-broker \
 echo "Service URL: $SERVICE_URL"
 ```
 
-### 4. Smoke Test (if public)
+### 4. Verify (ID-token)
 ```bash
-# Health check
-curl -sSf "$SERVICE_URL/health" || echo "Service is private or unavailable"
-
-# API test (if public)
-curl -sSf -X POST "$SERVICE_URL/ai/graph/suggest" \
-  -H 'Content-Type: application/json' \
-  -d '{"prompt":"test","provider":"local"}' || echo "Service is private"
+SERVICE=ai-broker
+REGION=us-central1
+gcloud config set project veria-dev
+URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
+IDT=$(gcloud auth print-identity-token --audiences="$URL")
+curl -sSf -H "Authorization: Bearer $IDT" "$URL"/ || true
+curl -sSf -H "Authorization: Bearer $IDT" -H 'content-type: application/json' \
+  -d '{"prompt":"hello"}' "$URL"/suggest || true
 ```
 
-### 5. Rollback (if needed)
+### 5. Rollback
 ```bash
-# List revisions
-gcloud run revisions list \
-  --service=ai-broker \
-  --region=us-central1 \
-  --format='table(name,traffic)'
-
-# Rollback to previous revision (replace REVISION_NAME)
 gcloud run services update-traffic ai-broker \
   --region=us-central1 \
-  --to-revisions=REVISION_NAME=100
+  --to-revisions=REV=100
 ```
 
 ## CI/CD Workflows
@@ -136,27 +130,27 @@ AND timestamp >= "2025-01-01T00:00:00Z"
 
 ## Access Control
 
-### Private Service (Default)
-Services are private by default. To test with authentication:
+### Privacy
+**Private-only by org policy. Unauthenticated access is prohibited.**
+
+### Private Service Access
+Services are private-only and require ID tokens for access:
 ```bash
 SERVICE_URL=$(gcloud run services describe ai-broker --region=us-central1 --format='value(status.url)')
 ID_TOKEN=$(gcloud auth print-identity-token --audiences="$SERVICE_URL")
 curl -H "Authorization: Bearer $ID_TOKEN" "$SERVICE_URL/health"
 ```
 
-### Make Service Public (Optional)
+### Organization Policy Restriction
+**NOTE**: The veria-dev project has an organization policy that prevents making services public with `allUsers`.
+Services must remain private and accessed with proper authentication.
+
+### Service Account Access
+To grant access to a specific service account:
 ```bash
 gcloud run services add-iam-policy-binding ai-broker \
   --region=us-central1 \
-  --member="allUsers" \
-  --role="roles/run.invoker"
-```
-
-### Revoke Public Access
-```bash
-gcloud run services remove-iam-policy-binding ai-broker \
-  --region=us-central1 \
-  --member="allUsers" \
+  --member="serviceAccount:SERVICE_ACCOUNT_EMAIL" \
   --role="roles/run.invoker"
 ```
 
@@ -177,9 +171,21 @@ gcloud run services remove-iam-policy-binding ai-broker \
 2. Verify image digest in Cloud Run console
 3. Check Cloud Run logs in Log Explorer
 
+## Deployment Status
+
+### ai-broker Service
+- **Status**: ✅ Successfully Deployed
+- **URL**: https://ai-broker-nuzxdfndbq-uc.a.run.app
+- **Revision**: ai-broker-00003-j4g (serving 100% traffic)
+- **Image**: Deployed by digest from us-central1-docker.pkg.dev/veria-dev/veria/ai-broker
+- **Access**: Private (requires authentication due to organization policy)
+- **Port**: 4001
+- **Service Account**: veria-automation@veria-dev.iam.gserviceaccount.com
+
 ## Notes
 - **OIDC/WIF Only**: No JSON keys used anywhere
 - **Deploy by Digest**: All deployments use image digest, not tags
 - **Branch Protection**: main branch can be overridden with admin
 - **Auth**: Workload Identity Federation via GitHub OIDC tokens
 - **Monorepo**: Some services may have build issues; deploy individually if needed
+- **Organization Policy**: Services cannot be made public with allUsers due to org policy
