@@ -69,3 +69,32 @@ Terraform outputs:
 - Path: `/_ah/health`
 - Response: HTTP 200 with body "ok"
 - Auth: Private service, requires Google ID token
+
+---
+
+## CI/CD (Prod)
+
+### Workflow
+- File: `.github/workflows/build-deploy-smoke-prod.yml`
+- Auth: **Workload Identity Federation** via GitHub OIDC (keyless)
+- Project: `veria-prod`
+- Triggers: push to main, manual dispatch
+
+### Pipeline Steps
+1. Build linux/amd64 image with Docker Buildx
+2. Push to Artifact Registry: `us-central1-docker.pkg.dev/veria-prod/veria/veria-hello:<git-sha>`
+3. Deploy Cloud Run service `veria-hello` **by digest** (not :latest)
+4. Run smoke test via `scripts/blitzy-smoke.sh` → hits `/_ah/health`
+
+### Required GitHub Secrets
+- `GCP_WIF_PROVIDER_PROD`: Workload Identity Provider resource name for prod
+- `GCP_WIF_SERVICE_ACCOUNT_PROD`: Deployer service account email for prod
+
+### Terraform Outputs
+- `hello_url`: Cloud Run service URL
+- `health_url`: Service URL + `/_ah/health`
+
+### Health Check
+- Path: `/_ah/health`
+- Response: HTTP 200 with body "ok"
+- Auth: Private service, requires Google ID token

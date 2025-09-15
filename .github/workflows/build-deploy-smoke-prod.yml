@@ -1,0 +1,83 @@
+name: "Prod: Build → Deploy → Smoke"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "services/hello/**"
+      - ".github/workflows/build-deploy-smoke-prod.yml"
+      - "scripts/blitzy-smoke.sh"
+      - "infra/prod/**"
+      - "BLITZY_SETUP.md"
+
+concurrency:
+  group: "prod-build-deploy-smoke"
+  cancel-in-progress: true
+
+env:
+  GCP_PROJECT_ID: "veria-prod"
+  GCP_REGION: "us-central1"
+  GAR_REPO: "veria"
+  SERVICE_NAME: "veria-hello"
+  IMAGE_BASE: "us-central1-docker.pkg.dev/veria-prod/veria/veria-hello"
+
+jobs:
+  build-deploy-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # Auth to GCP using Workload Identity Federation
+      - name: "Auth: gcloud"
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: "${{ secrets.GCP_WIF_PROVIDER_PROD }}"
+          service_account: "${{ secrets.GCP_WIF_SERVICE_ACCOUNT_PROD }}"
+
+      - name: "Set up gcloud SDK"
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: "Configure Docker to use Artifact Registry"
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: "Set up Docker Buildx"
+        uses: docker/setup-buildx-action@v3
+
+      - name: "Compute image tags"
+        id: meta
+        run: |
+          echo "sha=${GITHUB_SHA}" >> $GITHUB_OUTPUT
+          echo "tag=${{ env.IMAGE_BASE }}:${GITHUB_SHA}" >> $GITHUB_OUTPUT
+
+      - name: "Build & push (linux/amd64)"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/hello
+          push: true
+          tags: ${{ steps.meta.outputs.tag }}
+          platforms: linux/amd64
+
+      - name: "Resolve digest"
+        id: digest
+        run: |
+          DIGEST=$(gcloud artifacts docker images describe "${{ steps.meta.outputs.tag }}" \
+            --format='get(image_summary.digest)')
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+
+      - name: "Deploy Cloud Run by digest"
+        run: |
+          gcloud run deploy "${{ env.SERVICE_NAME }}" \
+            --image "${{ env.IMAGE_BASE }}@${{ steps.digest.outputs.digest }}" \
+            --region "${{ env.GCP_REGION }}" \
+            --no-allow-unauthenticated
+
+      - name: "Smoke (private)"
+        run: |
+          chmod +x scripts/blitzy-smoke.sh
+          REGION="${{ env.GCP_REGION }}" SERVICE="${{ env.SERVICE_NAME }}" ./scripts/blitzy-smoke.sh
