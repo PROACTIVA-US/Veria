@@ -50,4 +50,3 @@ queen.json.bak
 .terraform.lock.hcl
 *.tfstate*
 crash.log
-backup-pristine-*.tar.gz

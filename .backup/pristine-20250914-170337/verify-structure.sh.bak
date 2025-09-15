@@ -1,0 +1,156 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+RED=$'%F{196}'; GRN=$'%F{46}'; YLW=$'%F{220}'; CYA=$'%F{51}'; DEF=$'%f'
+PASS=true
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$ROOT"
+
+echo "${CYA}Verifying Veria repo structure...${DEF}"
+echo "Root: $ROOT"
+echo
+
+need_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "${YLW}⚠${DEF} Missing command: $1"
+    return 1
+  fi
+}
+
+check() {
+  local msg="$1"; shift
+  if eval "$@"; then
+    echo "${GRN}✔${DEF} $msg"
+  else
+    echo "${RED}✖${DEF} $msg"
+    PASS=false
+  fi
+}
+
+warn() { echo "${YLW}⚠${DEF} $*"; }
+
+# 0) Commands
+need_cmd git    || true
+need_cmd terraform || true
+need_cmd yq     || true
+need_cmd tflint || true
+
+# 1) Required paths
+REQ_PATHS=(
+  "infra"
+  "infra/terraform"
+  "infra/terraform/modules/gcp"
+  "infra/terraform/modules/cloudflare"
+  "infra/terraform/modules/gcp_cloudrun"
+  "infra/terraform/envs/dev"
+  "infra/terraform/envs/stage"
+  "infra/terraform/envs/prod"
+  "infra/DEPLOY.md"
+  "infra/DEPLOY_CLOUDRUN.md"
+  "infra/BLITZY_DEPLOYMENT.md"
+  "blitzy/blitzy_manifest.yaml"
+  ".github/workflows/infra-ci.yml"
+  ".github/workflows/infra-lint.yml"
+  "BLITZY_SETUP.md"
+  "docs/REPO_STRUCTURE.md"
+  "scripts/verify-structure.sh"
+  "Makefile"
+)
+
+for p in "${REQ_PATHS[@]}"; do
+  check "Exists: $p" "[ -e \"$p\" ]"
+done
+
+# 2) Env roots contain backend/main/variables
+for env in dev stage prod; do
+  for f in backend.tf main.tf variables.tf; do
+    check "Env ${env}: has ${f}" "[ -f \"infra/terraform/envs/${env}/${f}\" ]"
+  done
+done
+
+# 3) .gitignore hygiene
+GITIGNORE_LINES=(
+  ".terraform/"
+  "*.tfvars"
+  "terraform.tfstate*"
+)
+if [ -f .gitignore ]; then
+  for l in "${GITIGNORE_LINES[@]}"; do
+    if ! grep -qxF "$l" .gitignore 2>/dev/null; then
+      warn ".gitignore missing: $l"
+    else
+      echo "${GRN}✔${DEF} .gitignore includes: $l"
+    fi
+  done
+else
+  warn "No .gitignore found in repo root"
+fi
+
+# 4) Terraform fmt/validate without touching backend
+TF_DIRS=(
+  "infra/terraform/modules/gcp"
+  "infra/terraform/modules/cloudflare"
+  "infra/terraform/modules/gcp_cloudrun"
+  "infra/terraform/envs/dev"
+  "infra/terraform/envs/stage"
+  "infra/terraform/envs/prod"
+)
+
+for d in "${TF_DIRS[@]}"; do
+  if [ -d "$d" ]; then
+    echo
+    echo "${CYA}Terraform check: $d${DEF}"
+    if command -v terraform >/dev/null 2>&1; then
+      ( cd "$d"
+        terraform fmt -check -recursive || { warn "terraform fmt suggested changes in $d"; }
+        terraform init -backend=false -input=false >/dev/null
+        terraform validate
+      )
+      echo "${GRN}✔${DEF} terraform validate OK: $d"
+    else
+      warn "terraform not installed; skipping validate for $d"
+    fi
+    if command -v tflint >/dev/null 2>&1; then
+      ( cd "$d" && tflint --recursive || warn "tflint reported issues in $d" )
+    else
+      warn "tflint not installed; skipping lint for $d"
+    fi
+  fi
+done
+
+# 5) CI workflow sanity
+check "Workflow file present" "[ -f .github/workflows/infra-ci.yml ]"
+check "Lint workflow present" "[ -f .github/workflows/infra-lint.yml ]"
+if command -v yq >/dev/null 2>&1; then
+  WF_NAME=$(yq -r '.name' .github/workflows/infra-ci.yml || echo "")
+  echo "CI workflow name: ${WF_NAME:-unknown}"
+fi
+
+# 6) Optional: GitHub secrets (requires gh CLI and auth)
+if command -v gh >/dev/null 2>&1; then
+  echo
+  echo "${CYA}Checking repo secrets via gh (optional)${DEF}"
+  MISSING=0
+  for s in GCP_SA_KEY TF_VAR_GCP_PROJECT CF_API_TOKEN CF_ZONE ROOT_DOMAIN; do
+    if gh secret list | awk '{print $1}' | grep -qx "$s"; then
+      echo "${GRN}✔${DEF} secret exists: $s"
+    else
+      warn "Missing secret: $s"
+      MISSING=1
+    fi
+  done
+  if [ $MISSING -ne 0 ]; then
+    warn "Add missing secrets in GitHub → Settings → Secrets and variables → Actions"
+  fi
+else
+  warn "'gh' CLI not found; skipping secret checks."
+fi
+
+echo
+if $PASS; then
+  echo "${GRN}All checks passed.${DEF}"
+  exit 0
+else
+  echo "${RED}One or more checks failed.${DEF}"
+  exit 1
+fi

@@ -1,0 +1,26 @@
+You are an expert repo janitor. Make the Veria repo match this canonical structure exactly and remove any strays:
+
+ROOT
+├─ infra/
+│  ├─ BLITZY_DEPLOYMENT.md
+│  ├─ DEPLOY.md
+│  ├─ DEPLOY_CLOUDRUN.md
+│  └─ terraform/
+│     ├─ modules/{gcp,cloudflare,gcp_cloudrun}
+│     └─ envs/{dev,stage,prod} each with backend.tf, main.tf, variables.tf
+├─ blitzy/blitzy_manifest.yaml
+├─ .github/workflows/{infra-ci.yml,infra-lint.yml}
+├─ BLITZY_SETUP.md
+├─ scripts/{verify-structure.sh,fix-structure.sh,check-secrets.sh,blitzy-dryrun.sh,print-blitzy-dns.sh}
+├─ .tflint.hcl
+├─ .pre-commit-config.yaml
+└─ Makefile
+
+Tasks:
+1) Hoist nested bundles if present.
+2) Ensure `.gitignore` includes: `.terraform/`, `*.tfvars`, `terraform.tfstate*`.
+3) Remove obsolete/duplicative infra files.
+4) Run `scripts/verify-structure.sh`, fix any issues.
+5) Run `terraform fmt -recursive infra/terraform`.
+6) Do not commit any `*.tfvars` or `terraform.tfstate*` files.
+7) Output a PR titled `chore(infra): align repo + lint` with a summary of changes and verification logs.

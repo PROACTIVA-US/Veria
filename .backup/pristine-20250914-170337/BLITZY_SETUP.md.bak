@@ -1,0 +1,31 @@
+# Blitzy Setup for Veria
+
+This file tells Blitzy (and humans) where infra lives and how to deploy it.
+
+## Key paths
+- Infra root: `infra/`
+- Terraform envs: `infra/terraform/envs/{dev,stage,prod}`
+- Modules: `infra/terraform/modules/{gcp,cloudflare,gcp_cloudrun}`
+- CI: `.github/workflows/infra-ci.yml`
+- Lint CI: `.github/workflows/infra-lint.yml`
+- Blitzy manifest: `blitzy/blitzy_manifest.yaml`
+
+## Required repo secrets (GitHub → Settings → Secrets and variables → Actions)
+- `GCP_SA_KEY` – Service account JSON for Terraform
+- `TF_VAR_GCP_PROJECT` – Your GCP project id
+- `CF_API_TOKEN` – Cloudflare API token (Zone:Edit, DNS:Edit)
+- `CF_ZONE` = `veria.us`
+- `ROOT_DOMAIN` = `veria.us`
+
+## Standard PR titles Blitzy should respond to
+- **"Blitzy: Prepare Dev Infra"** – run Terraform plan/apply for baseline infra, **without** Cloud Run.
+- **"Blitzy: Deploy Veria Web (dev)"** – (1) build & push app image, (2) set TF vars for Cloud Run, (3) plan/apply dev.
+
+## Cloud Run Variables (dev)
+- `TF_VAR_enable_cloud_run=true`
+- `TF_VAR_cr_service_name=veria-web`
+- `TF_VAR_cr_image=us-central1-docker.pkg.dev/${TF_VAR_GCP_PROJECT}/veria-containers/veria-web:latest`
+- `TF_VAR_cr_env={"ENV":"dev"}`
+
+## Manual run (no Blitzy)
+See `infra/DEPLOY.md` and `infra/DEPLOY_CLOUDRUN.md`.

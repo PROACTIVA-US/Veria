@@ -1,0 +1,80 @@
+# Add your dev resources here, e.g. google_storage_bucket, google_cloud_run_service, etc.
+
+# Hello-world storage bucket
+resource "random_id" "rand" {
+  byte_length = 4
+}
+
+resource "google_storage_bucket" "hello" {
+  name     = "veria-dev-hello-${random_id.rand.hex}"
+  location = "US"
+
+  uniform_bucket_level_access = true
+  force_destroy               = true
+
+  labels = {
+    environment = "dev"
+    purpose     = "hello-world"
+  }
+}
+
+# -------------------------------
+# Artifact Registry (Docker repo)
+# -------------------------------
+
+# Enable Artifact Registry API
+resource "google_project_service" "artifactregistry" {
+  service = "artifactregistry.googleapis.com"
+}
+
+# Repository for app images
+resource "google_artifact_registry_repository" "app_repo" {
+    depends_on = [google_project_service.artifactregistry]
+  location      = "us-central1"
+  repository_id = "veria-app"
+  description   = "App images for Veria"
+  format        = "DOCKER"
+
+  labels = {
+    environment = "dev"
+  }
+}
+
+# -------------------------------
+# Cloud Run runtime identity (dev)
+# -------------------------------
+
+# Enable Cloud Run API
+resource "google_project_service" "run" {
+  service = "run.googleapis.com"
+}
+
+# Service Account that Cloud Run services will run as
+resource "google_service_account" "run_runtime" {
+  account_id   = "run-runtime"
+  display_name = "Cloud Run Runtime (dev)"
+}
+
+# Minimal perms for runtime SA (write logs)
+}
+
+# If services will read secrets later, uncomment:
+# resource "google_project_iam_member" "run_runtime_secrets" {
+#   role   = "roles/secretmanager.secretAccessor"
+#   member = "serviceAccount:${google_service_account.run_runtime.email}"
+# }
+
+
+# Minimal perms for runtime SA (write logs)
+resource "google_project_iam_member" "run_runtime_logs" {
+  project = "veria-dev"
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.run_runtime.email}"
+}
+
+# If services will read secrets later, uncomment:
+# resource "google_project_iam_member" "run_runtime_secrets" {
+#   project = "veria-dev"
+#   role    = "roles/secretmanager.secretAccessor"
+#   member  = "serviceAccount:${google_service_account.run_runtime.email}"
+# }

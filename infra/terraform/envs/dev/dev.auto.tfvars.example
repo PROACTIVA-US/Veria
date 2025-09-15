@@ -1,0 +1,24 @@
+# Copy to dev.auto.tfvars and edit values
+
+gcp_project = "veria-472023"
+gcp_region  = "us-central1"
+
+cloudflare_api_token = "x6G73ra5pcWnWsG9Qt1nbxq75ZlmRJUURgM6h2No"
+cloudflare_zone      = "veria.us"
+root_domain          = "veria.us"
+
+# Infra toggles
+create_artifact_registry = true
+create_network           = true
+enable_dns_examples      = false
+
+# Cloud Run toggles (leave disabled until you have an image)
+enable_cloud_run         = false
+cr_service_name          = "veria-web"
+cr_image                 = "us-central1-docker.pkg.dev/your-gcp-project/veria-containers/veria-web:latest"
+cr_env = { ENV = "dev" }
+cr_min_instances = 0
+cr_max_instances = 3
+cr_cpu = "1"
+cr_memory = "512Mi"
+cr_allow_unauthenticated = true

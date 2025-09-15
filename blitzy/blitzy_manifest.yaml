@@ -1,0 +1,39 @@
+version: 1
+name: veria-infra
+description: >
+  Blitzy entrypoint for Veria infra. Builds app image (in app repo), updates Terraform
+  vars, and applies infra for dev. Does not auto-create domain mapping without approval.
+
+steps:
+  - id: build_and_push_image
+    when_title_starts_with:
+      - "Blitzy: Deploy Veria Web (dev)"
+    run_in: app-repo
+    actions:
+      - docker_build:
+          context: .
+          tags:
+            - "us-central1-docker.pkg.dev/${TF_VAR_GCP_PROJECT}/veria-containers/veria-web:${GIT_SHA}"
+            - "us-central1-docker.pkg.dev/${TF_VAR_GCP_PROJECT}/veria-containers/veria-web:latest"
+          login: artifact_registry
+
+  - id: set_tf_vars
+    run_in: infra-repo
+    actions:
+      - set_env:
+          TF_VAR_enable_cloud_run: "true"
+          TF_VAR_cr_service_name: "veria-web"
+          TF_VAR_cr_image: "us-central1-docker.pkg.dev/${TF_VAR_GCP_PROJECT}/veria-containers/veria-web:latest"
+          TF_VAR_cr_env: '{"ENV":"dev"}'
+
+  - id: tf_plan_apply_dev
+    run_in: infra-repo
+    working_directory: infra/terraform/envs/dev
+    actions:
+      - terraform_init: {}
+      - terraform_plan: {}
+      - wait_for_approval: { message: "Apply dev infra (Cloud Run)?" }
+      - terraform_apply: {}
+
+notes:
+  - After apply, follow infra/DEPLOY_CLOUDRUN.md to bind app.veria.us.
