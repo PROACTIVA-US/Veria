@@ -1,100 +1,75 @@
 # Blitzy Setup — Veria (dev)
 
-## Constants (dev)
+## Constants
 - PROJECT_ID: `veria-dev`
 - REGION: `us-central1`
-- AR_REPO: `veria`        # Artifact Registry repo name (docker)
+- AR_REPO: `veria`
 - SERVICE_NAME: `veria-hello`
 
-## Required GitHub Action Secrets (set before Blitzy runs CI)
-- `GCP_WIF_PROVIDER` - Workload Identity Provider resource name
-- `GCP_WIF_SERVICE_ACCOUNT` - Service account email for deployment
-
-> Using Workload Identity Federation (WIF) for keyless auth - no JSON keys needed.
-
----
-
-## One-time local sanity (dev)
+## One-time local sanity
 ```bash
-# from repo root
+# Verify setup
 ./scripts/verify-all.sh || true
 
-# Build a real image for dev deploy (manual smoke)
-gcloud builds submit \
-  --tag us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:latest \
+# Images must be built for linux/amd64
+```
+
+## Build & Push (local)
+```bash
+# Build and push linux/amd64 image with buildx
+docker buildx build \
+  --platform linux/amd64 \
+  --tag us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:$(git rev-parse --short HEAD) \
+  --push \
   services/hello
 
-## Blitzy Quickstart (dev, private)
+# Get digest for deployment (avoid :latest drift)
+gcloud artifacts docker images describe \
+  us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:$(git rev-parse --short HEAD) \
+  --format='get(image_summary.digest)'
+```
+**Note:** Always deploy by digest (@sha256:...) to avoid :latest drift
 
-Service: veria-hello (region: us-central1)
-Image: us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:<sha or @digest>
-Arch: linux/amd64
+## Terraform (dev)
+```bash
+terraform -chdir=infra/dev init
+terraform -chdir=infra/dev apply -var-file=dev.tfvars -auto-approve
+```
+Outputs: `hello_url`, `health_url`
 
-Auth: Private Cloud Run. Use Google ID token.
+## Access model (PRIVATE)
+Service requires Google ID token for invocation:
+```bash
+SERVICE_URL=$(gcloud run services describe veria-hello --region us-central1 --format='value(status.url)')
+ID_TOKEN=$(gcloud auth print-identity-token)
+curl -i -H "Authorization: Bearer $ID_TOKEN" "$SERVICE_URL/_ah/health"
+```
 
-Health:
-  Path: /_ah/health  -> 200 "ok"
-
-Smoke (from a dev machine with gcloud):
-  SERVICE_URL=$(gcloud run services describe veria-hello --region us-central1 --format='value(status.url)')
-  ID_TOKEN=$(gcloud auth print-identity-token)
-  curl -i -H "Authorization: Bearer $ID_TOKEN" "$SERVICE_URL/_ah/health"
-
-Terraform outputs:
-  - hello_url
-  - health_url
+## Health & Smoke
+- Health endpoint: `/_ah/health` → 200 "ok"
+- Smoke script: `scripts/blitzy-smoke.sh` (uses gcloud user ID token)
 
 ## CI/CD (Dev)
+- Workflow: `.github/workflows/build-deploy-smoke-dev.yml`
+- Auth: **Workload Identity Federation (GitHub OIDC)**, no JSON keys
+- Workflow permissions: `id-token: write`, `contents: read`
+- Steps:
+  1. Buildx → **linux/amd64**
+  2. Push AR with commit SHA tag
+  3. Resolve **@digest** and deploy Cloud Run by digest
+  4. Smoke `/_ah/health`
+- Required repo secrets:
+  - `GCP_WIF_PROVIDER` (e.g., `projects/<number>/locations/global/workloadIdentityPools/github-pool/providers/github-provider`)
+  - `GCP_WIF_SERVICE_ACCOUNT` (e.g., `veria-deployer@veria-dev.iam.gserviceaccount.com`)
 
-### Workflow
-- File: `.github/workflows/build-deploy-smoke-dev.yml`
-- Auth: **Workload Identity Federation** via GitHub OIDC (keyless)
-- Triggers: push to main, manual dispatch
+## Prod
+- PROJECT_ID: `veria-prod` (same region/service)
+- Workflow: `.github/workflows/build-deploy-smoke-prod.yml`
+- Required prod secrets: `GCP_WIF_PROVIDER_PROD`, `GCP_WIF_SERVICE_ACCOUNT_PROD`
+- Same health/smoke conventions
 
-### Pipeline Steps
-1. Build linux/amd64 image with Docker Buildx
-2. Push to Artifact Registry: `us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:<git-sha>`
-3. Deploy Cloud Run service `veria-hello` **by digest** (not :latest)
-4. Run smoke test via `scripts/blitzy-smoke.sh` → hits `/_ah/health`
-
-### Required GitHub Secrets
-- `GCP_WIF_PROVIDER`: Workload Identity Provider resource name
-- `GCP_WIF_SERVICE_ACCOUNT`: Deployer service account email
-
-### Terraform Outputs
-- `hello_url`: Cloud Run service URL
-- `health_url`: Service URL + `/_ah/health`
-
-### Health Check
-- Path: `/_ah/health`
-- Response: HTTP 200 with body "ok"
-- Auth: Private service, requires Google ID token
-
----
-
-## CI/CD (Prod)
-
-### Workflow
-- File: `.github/workflows/build-deploy-smoke-prod.yml`
-- Auth: **Workload Identity Federation** via GitHub OIDC (keyless)
-- Project: `veria-prod`
-- Triggers: push to main, manual dispatch
-
-### Pipeline Steps
-1. Build linux/amd64 image with Docker Buildx
-2. Push to Artifact Registry: `us-central1-docker.pkg.dev/veria-prod/veria/veria-hello:<git-sha>`
-3. Deploy Cloud Run service `veria-hello` **by digest** (not :latest)
-4. Run smoke test via `scripts/blitzy-smoke.sh` → hits `/_ah/health`
-
-### Required GitHub Secrets
-- `GCP_WIF_PROVIDER_PROD`: Workload Identity Provider resource name for prod
-- `GCP_WIF_SERVICE_ACCOUNT_PROD`: Deployer service account email for prod
-
-### Terraform Outputs
-- `hello_url`: Cloud Run service URL
-- `health_url`: Service URL + `/_ah/health`
-
-### Health Check
-- Path: `/_ah/health`
-- Response: HTTP 200 with body "ok"
-- Auth: Private service, requires Google ID token
+## Troubleshooting
+- **Image not found** → push to AR or use digest
+- **amd64 required** → build with buildx `--platform linux/amd64`
+- **Private 401** → use ID token; verify invoker IAM
+- **Startup timeout** → ensure server listens on `$PORT` (8080)
