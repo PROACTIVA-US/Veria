@@ -50,4 +50,4 @@ JWT-based authentication with role-based access control:
 The app is containerized and deployed to Cloud Run:
 - Dev: `veria-investor-dev`
 - Staging: `veria-investor-staging`
-- Prod: `veria-investor` (flag OFF by default)
+- Prod: `veria-investor` (flag OFF by default)# Trigger rebuild
