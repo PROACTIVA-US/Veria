@@ -33,12 +33,29 @@ variable "repository" {
 
 data "google_project" "current" {}
 
+# Enable required APIs
+resource "google_project_service" "enable_services" {
+  project = var.project_id
+  for_each = toset([
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "run.googleapis.com",
+    "cloudbuild.googleapis.com"
+  ])
+  service            = each.key
+  disable_on_destroy = false
+}
+
 # Workload Identity Pool for GitHub
 resource "google_iam_workload_identity_pool" "github_pool" {
   workload_identity_pool_id = "github-pool"
   display_name              = "GitHub Actions Pool"
-  description               = "Workload Identity Pool for GitHub Actions"
+  description               = "OIDC federation for PROACTIVA-US GitHub workflows"
   disabled                  = false
+
+  depends_on = [google_project_service.enable_services]
 }
 
 # Workload Identity Provider for GitHub OIDC
@@ -54,10 +71,11 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
   }
 
   attribute_mapping = {
-    "google.subject"       = "assertion.sub"
-    "attribute.repository" = "assertion.repository"
-    "attribute.ref"        = "assertion.ref"
-    "attribute.actor"      = "assertion.actor"
+    "google.subject"          = "assertion.sub"
+    "attribute.repository"    = "assertion.repository"
+    "attribute.workflow_ref"  = "assertion.workflow_ref"
+    "attribute.ref"           = "assertion.ref"
+    "attribute.actor"         = "assertion.actor"
   }
 }
 
