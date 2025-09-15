@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
 import { StatementDTO } from '@veria/types-investor';
-import { fetchWithAuth } from '@/lib/auth';
+// import { fetchWithAuth } from '@/lib/auth';
 import { FileText, Download, Calendar } from 'lucide-react';
 
 export default function StatementsPage() {
