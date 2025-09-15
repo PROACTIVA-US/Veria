@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import investorRoutes from './routes/investor';
 
 dotenv.config();
 
@@ -17,6 +18,9 @@ const limiter = rateLimit({
 app.use(cors());
 app.use(express.json());
 app.use('/api', limiter);
+
+// Mount investor routes
+app.use('/api/investor', investorRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', service: 'api-gateway', phase: 'Phase 3 - Planned' });
