@@ -1,26 +1,79 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import { GraphSuggestInput, GraphSuggestOutput } from '../utils/schema.js';
 import { suggestWithOpenAI } from '../providers/openai.js';
 import { suggestWithAnthropic } from '../providers/anthropic.js';
 import { suggestWithGemini } from '../providers/gemini.js';
 import { suggestWithLocal } from '../providers/local.js';
-const r = Router();
-r.post('/suggest', async (req,res) => {
-  const parsed = GraphSuggestInput.safeParse(req.body); if (!parsed.success) return res.status(400).json(parsed.error.format());
-  const input = parsed.data;
-  const order = input.provider === 'auto' ? ['openai','anthropic','gemini','local'] : [input.provider];
-  let lastError = null;
-  for (const p of order) {
-    try {
-      let out; if (p==='openai') out = await suggestWithOpenAI(input);
-      else if (p==='anthropic') out = await suggestWithAnthropic(input);
-      else if (p==='gemini') out = await suggestWithGemini(input);
-      else out = await suggestWithLocal(input);
-      const validated = GraphSuggestOutput.parse(out);
-      return res.json(validated);
-    } catch (e){ 
-      lastError = e; continue;
+
+const router: Router = Router();
+
+router.post('/suggest', async (req: Request, res: Response) => {
+  try {
+    // Validate input
+    const parsed = GraphSuggestInput.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid input',
+        issues: parsed.error.issues
+      });
+    }
+
+    const input = parsed.data;
+
+    // Determine provider order
+    const providerOrder = input.provider === 'auto'
+      ? ['openai', 'anthropic', 'gemini', 'local']
+      : [input.provider];
+
+    let lastError: Error | null = null;
+
+    // Try each provider in order
+    for (const provider of providerOrder) {
+      try {
+        let output;
+
+        switch (provider) {
+          case 'openai':
+            output = await suggestWithOpenAI(input);
+            break;
+          case 'anthropic':
+            output = await suggestWithAnthropic(input);
+            break;
+          case 'gemini':
+            output = await suggestWithGemini(input);
+            break;
+          case 'local':
+          default:
+            output = await suggestWithLocal(input);
+            break;
+        }
+
+        // Validate output
+        const validated = GraphSuggestOutput.parse(output);
+        return res.json(validated);
+
+      } catch (providerError) {
+        lastError = providerError as Error;
+        // Continue to next provider
+        continue;
+      }
+    }
+
+    // All providers failed
+    return res.status(502).json({
+      error: 'All providers failed',
+      detail: lastError ? lastError.message : 'Unknown error'
+    });
+
+  } catch (error) {
+    // Unexpected error
+    console.error('Unexpected error in /suggest:', error);
+    return res.status(500).json({
+      error: 'Internal server error'
+    });
   }
-  return res.status(502).json({ error:'All providers failed', detail:String(lastError) });
 });
-export default r;
+
+export default router;
