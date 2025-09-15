@@ -1,9 +1,10 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: veria-api
+  name: veria-investor
   labels:
     environment: ${ENVIRONMENT}
+    app: investor-portal
   annotations:
     run.googleapis.com/launch-stage: GA
 spec:
@@ -20,82 +21,64 @@ spec:
     spec:
       containerConcurrency: 100
       timeoutSeconds: 300
-      serviceAccountName: veria-api@${GCP_PROJECT_ID}.iam.gserviceaccount.com
+      serviceAccountName: veria-investor@${GCP_PROJECT_ID}.iam.gserviceaccount.com
       containers:
-        - name: veria-api
+        - name: veria-investor
           image: ${IMAGE_URL}
           ports:
             - name: http1
-              containerPort: 3001
+              containerPort: 3002
           env:
             - name: NODE_ENV
               value: ${ENVIRONMENT}
             - name: SERVICE
-              value: gateway
+              value: investor
             - name: PORT
-              value: "3001"
-            - name: DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: db-url
-                  key: latest
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: redis-url
-                  key: latest
+              value: "3002"
+            - name: FEATURE_INVESTOR_PORTAL
+              value: "${FEATURE_INVESTOR_PORTAL}"
+            - name: NEXT_PUBLIC_API_URL
+              value: ${API_GATEWAY_URL}
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: jwt-secret
                   key: latest
-            - name: ALCHEMY_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: alchemy-api-key
-                  key: latest
-            - name: STRIPE_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: stripe-secret-key
-                  key: latest
-            - name: STRIPE_WEBHOOK_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: stripe-webhook-secret
-                  key: latest
             - name: SENTRY_DSN
               valueFrom:
                 secretKeyRef:
-                  name: sentry-dsn-backend
+                  name: sentry-dsn-frontend
                   key: latest
+                  optional: true
             - name: DATADOG_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: datadog-api-key
                   key: latest
-            - name: FEATURE_INVESTOR_PORTAL
-              value: "${FEATURE_INVESTOR_PORTAL}"
+                  optional: true
           resources:
             limits:
-              cpu: "2"
-              memory: "2Gi"
-            requests:
-              cpu: "0.5"
+              cpu: "1"
               memory: "512Mi"
+            requests:
+              cpu: "0.25"
+              memory: "256Mi"
           livenessProbe:
             httpGet:
-              path: /health
-              port: 3001
+              path: /api/health
+              port: 3002
             initialDelaySeconds: 30
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /health
-              port: 3001
+              path: /api/health
+              port: 3002
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
+  traffic:
+    - percent: 100
+      latestRevision: true
