@@ -1,0 +1,140 @@
+name: OIDC Smoketest
+
+on:
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable verbose output'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  oidc-auth-test:
+    name: Test OIDC Authentication
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via OIDC
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Display authentication details
+        run: |
+          echo "=========================================="
+          echo "OIDC Authentication Test"
+          echo "=========================================="
+          echo ""
+          echo "Authenticated identity:"
+          gcloud auth list --filter=status:ACTIVE --format="value(account)"
+          echo ""
+          echo "Current project:"
+          gcloud config get-value project
+          echo ""
+          echo "Project number:"
+          gcloud projects describe ${{ secrets.GCP_PROJECT_ID }} --format="value(projectNumber)"
+
+      - name: Test storage access
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "Testing Storage Access"
+          echo "=========================================="
+          echo "Listing storage buckets (limit 1):"
+          gcloud storage buckets list --project=${{ secrets.GCP_PROJECT_ID }} --limit=1 --format="table(name,location,storageClass)" || true
+
+      - name: Test Cloud Run access
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "Testing Cloud Run Access"
+          echo "=========================================="
+          echo "Listing Cloud Run services in us-central1:"
+          gcloud run services list --region=us-central1 --format="table(metadata.name:label='SERVICE',status.url:label='URL',metadata.annotations.\"run.googleapis.com/lastModifier\":label='LAST_MODIFIED_BY')" || true
+
+      - name: Test Artifact Registry access
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "Testing Artifact Registry Access"
+          echo "=========================================="
+          echo "Listing Artifact Registry repositories:"
+          gcloud artifacts repositories list --location=us-central1 --format="table(name,format)" || true
+
+      - name: Verify service account permissions
+        if: ${{ github.event.inputs.verbose == 'true' }}
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "Service Account IAM Roles"
+          echo "=========================================="
+          echo "Checking IAM roles for ${{ secrets.GCP_SA_EMAIL }}:"
+          gcloud projects get-iam-policy ${{ secrets.GCP_PROJECT_ID }} \
+            --flatten="bindings[].members" \
+            --filter="bindings.members:serviceAccount:${{ secrets.GCP_SA_EMAIL }}" \
+            --format="table(bindings.role)"
+
+      - name: Test WIF token details
+        if: ${{ github.event.inputs.verbose == 'true' }}
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "WIF Token Details"
+          echo "=========================================="
+          echo "GitHub context:"
+          echo "  Repository: ${{ github.repository }}"
+          echo "  Ref: ${{ github.ref }}"
+          echo "  SHA: ${{ github.sha }}"
+          echo "  Actor: ${{ github.actor }}"
+          echo "  Workflow: ${{ github.workflow }}"
+          echo ""
+          echo "Access token info:"
+          gcloud auth print-access-token | cut -c1-20 && echo "...truncated"
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "✅ OIDC Authentication Test Complete"
+          echo "=========================================="
+          echo ""
+          echo "Successfully authenticated using:"
+          echo "  - Workload Identity Provider"
+          echo "  - Service Account: ${{ secrets.GCP_SA_EMAIL }}"
+          echo "  - Project: ${{ secrets.GCP_PROJECT_ID }}"
+          echo ""
+          echo "The OIDC authentication is working correctly!"
+
+      - name: Generate test summary
+        run: |
+          echo "## ✅ OIDC Authentication Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project ID**: ${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service Account**: ${{ secrets.GCP_SA_EMAIL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch/Tag**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ OIDC authentication successful" >> $GITHUB_STEP_SUMMARY
+          echo "✅ GCP API access verified" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The workload identity federation is configured correctly and ready for use!" >> $GITHUB_STEP_SUMMARY

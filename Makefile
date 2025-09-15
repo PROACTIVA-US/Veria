@@ -39,3 +39,22 @@ smoke:
 tag-baseline:
 	@git tag -a v0.1.0 -m "Baseline ready for Blitzy" || true
 	@git push origin v0.1.0 || true
+
+# --- WIF/OIDC helpers ---
+.PHONY: wif.verify cd.smoke
+
+wif.verify:
+	@echo "Verifying WIF configuration..."
+	@cd infra/ci && ./verify-wif.sh
+
+cd.smoke:
+	@echo "CD Environment Check"
+	@echo "===================="
+	@echo "Project ID: veria-dev"
+	@echo "Provider: projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+	@echo "Service Account: veria-automation@veria-dev.iam.gserviceaccount.com"
+	@echo ""
+	@echo "Required GitHub secrets:"
+	@echo "  - GCP_PROJECT_ID=veria-dev"
+	@echo "  - GCP_SA_EMAIL=veria-automation@veria-dev.iam.gserviceaccount.com"
+	@echo "  - WORKLOAD_IDENTITY_PROVIDER=projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
