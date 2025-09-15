@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
 import { KycDTO } from '@veria/types-investor';
 import { formatDate } from '@/lib/utils';
-import { fetchWithAuth } from '@/lib/auth';
+// import { fetchWithAuth } from '@/lib/auth';
 import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 
 export default function KycPage() {

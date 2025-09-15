@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
 import { PortfolioDTO } from '@veria/types-investor';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { fetchWithAuth } from '@/lib/auth';
+// import { fetchWithAuth } from '@/lib/auth';
 import { TrendingUp, TrendingDown, DollarSign, PieChart } from 'lucide-react';
 
 export default function PortfolioPage() {
