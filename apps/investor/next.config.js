@@ -3,9 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   output: 'standalone',
-  experimental: {
-    serverActions: true,
-  },
   env: {
     FEATURE_INVESTOR_PORTAL: process.env.FEATURE_INVESTOR_PORTAL || 'false',
   },

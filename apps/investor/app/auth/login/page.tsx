@@ -137,7 +137,7 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <a href="#" className="text-primary hover:underline">
                 Contact your advisor
               </a>
