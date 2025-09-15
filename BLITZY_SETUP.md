@@ -56,12 +56,20 @@ CI Inputs (GitHub Actions secrets):
 
 ## CI/CD (Dev)
 - Workflow: `.github/workflows/build-deploy-smoke-dev.yml`
+- Authentication: **Workload Identity Federation** (no JSON key)
 - Steps:
   1) buildx → linux/amd64
   2) push AR → `us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:<git-sha>`
   3) deploy Cloud Run **by digest**
   4) smoke (private) via `scripts/blitzy-smoke.sh` → `/_ah/health`
-- Secrets:
-  - `GCP_SA_KEY` (JSON; roles: run.admin, artifactregistry.writer, iam.serviceAccountUser)
+- Required repo secrets:
+  - `GCP_WIF_PROVIDER` (e.g., `projects/<number>/locations/global/workloadIdentityPools/github-pool/providers/github-provider`)
+  - `GCP_WIF_SERVICE_ACCOUNT` (e.g., `veria-deployer@veria-dev.iam.gserviceaccount.com`)
+- GitHub workflow permissions:
+  ```yaml
+  permissions:
+    id-token: write
+    contents: read
+  ```
 - Environment:
   - `GCP_PROJECT_ID=veria-dev`, `GCP_REGION=us-central1`, `GAR_REPO=veria`, `SERVICE_NAME=veria-hello`

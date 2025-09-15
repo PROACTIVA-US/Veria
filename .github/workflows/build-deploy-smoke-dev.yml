@@ -25,14 +25,18 @@ env:
 jobs:
   build-deploy-smoke:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
-      # Auth to GCP using the existing JSON key secret
+      # Auth to GCP using Workload Identity Federation
       - name: "Auth: gcloud"
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: "${{ secrets.GCP_SA_KEY }}"
+          workload_identity_provider: "${{ secrets.GCP_WIF_PROVIDER }}"
+          service_account: "${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}"
 
       - name: "Set up gcloud SDK"
         uses: google-github-actions/setup-gcloud@v2
