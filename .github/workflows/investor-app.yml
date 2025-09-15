@@ -127,7 +127,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "${{ secrets.GCP_WIF_PROVIDER || 'projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}"
+          workload_identity_provider: "${{ secrets.GCP_WIF_PROVIDER || secrets.GCP_DEV_WIP || 'projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}"
           service_account: "${{ secrets.GCP_WIF_SERVICE_ACCOUNT || 'veria-deployer@veria-dev.iam.gserviceaccount.com' }}"
 
       - name: Set up Cloud SDK
@@ -165,7 +165,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: "${{ secrets.GCP_WIF_PROVIDER || 'projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}"
+          workload_identity_provider: "${{ secrets.GCP_WIF_PROVIDER || secrets.GCP_DEV_WIP || 'projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}"
           service_account: "${{ secrets.GCP_WIF_SERVICE_ACCOUNT || 'veria-deployer@veria-dev.iam.gserviceaccount.com' }}"
 
       - name: Deploy to Cloud Run (Staging)
