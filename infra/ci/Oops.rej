@@ -1,0 +1,11 @@
+@@ -165,8 +165,8 @@
+       - name: Authenticate to Google Cloud
+         uses: google-github-actions/auth@v2
+         with:
+-          workload_identity_provider: projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+-          service_account: github-actions@${{ env.PROJECT_ID }}.iam.gserviceaccount.com
++          workload_identity_provider: "projects/190356591245/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
++          service_account: "veria-deployer@veria-dev.iam.gserviceaccount.com"
+ 
+       - name: Deploy to Cloud Run (Staging)
+         run: |
