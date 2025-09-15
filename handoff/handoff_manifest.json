@@ -1,0 +1,12 @@
+{
+  "projectId": "veria-dev",
+  "projectNumber": "190356591245",
+  "region": "us-central1",
+  "service": "ai-broker",
+  "wifPool": "github-pool",
+  "wifProvider": "github-provider",
+  "ciServiceAccount": "veria-automation@veria-dev.iam.gserviceaccount.com",
+  "ghSecrets": ["GCP_PROJECT_ID", "GCP_SA_EMAIL", "WORKLOAD_IDENTITY_PROVIDER"],
+  "triggers": ["push:main", "tag:v*.*.*"],
+  "deployByDigest": true
+}
