@@ -7,14 +7,10 @@
 - SERVICE_NAME: `veria-hello`
 
 ## Required GitHub Action Secrets (set before Blitzy runs CI)
-- `GCP_SA_KEY`           # JSON for a Service Account with: roles/run.admin, roles/artifactregistry.writer, roles/iam.serviceAccountUser
-- `GCP_PROJECT_ID=veria-dev`
-- `GCP_REGION=us-central1`
-- `GAR_REPO=veria`
-- (optional) `HEALTH_URL` e.g. `https://<cloud-run-url>/healthz`
-- (optional) Cloudflare if mapping DNS later: `CLOUDFLARE_API_TOKEN`, `CF_ACCOUNT_ID`, `CF_ZONE_ID`
+- `GCP_WIF_PROVIDER` - Workload Identity Provider resource name
+- `GCP_WIF_SERVICE_ACCOUNT` - Service account email for deployment
 
-> Blitzy will use these to auth and deploy. No local plaintext keys checked in.
+> Using Workload Identity Federation (WIF) for keyless auth - no JSON keys needed.
 
 ---
 
@@ -48,28 +44,28 @@ Terraform outputs:
   - hello_url
   - health_url
 
-CI Inputs (GitHub Actions secrets):
-  - GCP_SA_KEY (JSON; roles: run.admin, artifactregistry.writer, iam.serviceAccountUser)
-  - GCP_PROJECT_ID=veria-dev
-  - GCP_REGION=us-central1
-  - (optional) GAR_REPO=veria
-
 ## CI/CD (Dev)
-- Workflow: `.github/workflows/build-deploy-smoke-dev.yml`
-- Authentication: **Workload Identity Federation** (no JSON key)
-- Steps:
-  1) buildx → linux/amd64
-  2) push AR → `us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:<git-sha>`
-  3) deploy Cloud Run **by digest**
-  4) smoke (private) via `scripts/blitzy-smoke.sh` → `/_ah/health`
-- Required repo secrets:
-  - `GCP_WIF_PROVIDER` (e.g., `projects/<number>/locations/global/workloadIdentityPools/github-pool/providers/github-provider`)
-  - `GCP_WIF_SERVICE_ACCOUNT` (e.g., `veria-deployer@veria-dev.iam.gserviceaccount.com`)
-- GitHub workflow permissions:
-  ```yaml
-  permissions:
-    id-token: write
-    contents: read
-  ```
-- Environment:
-  - `GCP_PROJECT_ID=veria-dev`, `GCP_REGION=us-central1`, `GAR_REPO=veria`, `SERVICE_NAME=veria-hello`
+
+### Workflow
+- File: `.github/workflows/build-deploy-smoke-dev.yml`
+- Auth: **Workload Identity Federation** via GitHub OIDC (keyless)
+- Triggers: push to main, manual dispatch
+
+### Pipeline Steps
+1. Build linux/amd64 image with Docker Buildx
+2. Push to Artifact Registry: `us-central1-docker.pkg.dev/veria-dev/veria/veria-hello:<git-sha>`
+3. Deploy Cloud Run service `veria-hello` **by digest** (not :latest)
+4. Run smoke test via `scripts/blitzy-smoke.sh` → hits `/_ah/health`
+
+### Required GitHub Secrets
+- `GCP_WIF_PROVIDER`: Workload Identity Provider resource name
+- `GCP_WIF_SERVICE_ACCOUNT`: Deployer service account email
+
+### Terraform Outputs
+- `hello_url`: Cloud Run service URL
+- `health_url`: Service URL + `/_ah/health`
+
+### Health Check
+- Path: `/_ah/health`
+- Response: HTTP 200 with body "ok"
+- Auth: Private service, requires Google ID token
