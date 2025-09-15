@@ -1,0 +1,48 @@
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+infra
+scripts
+
+# Documentation
+*.md
+docs
+
+# Development
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Testing
+coverage
+.nyc_output
+
+# Build artifacts that will be regenerated
+dist
+build
+*.tsbuildinfo
+
+# Node modules (will be installed fresh)
+**/node_modules
+
+# Temporary files
+tmp
+temp
+*.tmp

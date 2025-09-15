@@ -6,19 +6,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
 
-# Copy workspace configuration
-COPY package.json pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml ./
-
-# Copy all package.json files for workspace
-COPY packages/*/package.json ./packages/
-COPY services/*/package.json ./services/
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy source code
+# Copy everything first (we'll optimize with .dockerignore if needed)
 COPY . .
+
+# Install dependencies with frozen lockfile
+RUN pnpm install --frozen-lockfile
 
 # Build all services
 RUN pnpm build
