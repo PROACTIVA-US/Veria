@@ -1,19 +1,47 @@
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package.json pnpm-lock.yaml* package-lock.json* yarn.lock* ./
-RUN if [ -f pnpm-lock.yaml ]; then       corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile;     elif [ -f package-lock.json ]; then npm ci;     elif [ -f yarn.lock ]; then yarn install --frozen-lockfile;     else npm install; fi
-
 FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npx tsc -p tsconfig.json
 
-FROM node:20-alpine
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 WORKDIR /app
+
+# Copy root package files
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+
+# Copy ai-broker package.json
+COPY services/ai-broker/package.json ./services/ai-broker/
+
+# Install ALL dependencies (needed for workspace)
+RUN pnpm install --frozen-lockfile
+
+# Copy ai-broker source
+COPY services/ai-broker/ ./services/ai-broker/
+
+# Build ai-broker
+RUN pnpm --filter=ai-broker build
+
+# Production stage
+FROM node:20-alpine
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Copy package files
+COPY --from=builder /app/package.json /app/pnpm-workspace.yaml /app/pnpm-lock.yaml ./
+COPY --from=builder /app/services/ai-broker/package.json ./services/ai-broker/
+
+# Install production dependencies
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy built application
+COPY --from=builder /app/services/ai-broker/dist ./services/ai-broker/dist
+
+# Set working directory to service
+WORKDIR /app/services/ai-broker
+
 ENV NODE_ENV=production
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY package.json ./package.json
+ENV PORT=4001
+
 EXPOSE 4001
+
 CMD ["node", "dist/index.js"]

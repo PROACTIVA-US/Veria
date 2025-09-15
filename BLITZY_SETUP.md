@@ -1,5 +1,7 @@
 # Blitzy Setup - Veria OIDC/WIF Deployment
 
+**Spec:** [Veria Tech Spec v2 (Blitzy, Private-Only)](tech-specs/Veria-Tech-Spec-v2-Blitzy.md)
+
 ## Project Configuration
 
 - **GCP Project**: veria-dev

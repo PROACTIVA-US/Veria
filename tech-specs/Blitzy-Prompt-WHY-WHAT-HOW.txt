@@ -1,0 +1,16 @@
+Blitzy Prompt (WHY / WHAT / HOW)
+
+WHY
+Autonomously build & operate Veria dev using our existing OIDC/WIF pipeline, deploying `ai-broker` to Cloud Run by digest with private‑only access. Produce a clear ops report + rollback plan.
+
+WHAT
+- Build, push, deploy `ai-broker` (private‑only).
+- Provide post‑deploy report (URL, digest, revision, traffic).
+- Confirm logs in Cloud Logging.
+- Do not alter OIDC/WIF, IAM, or branch protections.
+
+HOW
+- Use `.github/workflows/cd.yml` (OIDC `auth@v2`, linux/amd64).
+- Use existing Artifact Registry path; deploy by DIGEST only.
+- CI auth via `veria-automation@veria-dev.iam.gserviceaccount.com`.
+- Request runtime env/secrets and mount via Secret Manager.
