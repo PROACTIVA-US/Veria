@@ -26,3 +26,16 @@ build-push:
 
 blitzy-dryrun:
 	@./scripts/blitzy-dryrun.sh
+
+# --- Blitzy helpers ---
+.PHONY: ci test build smoke tag-baseline
+ci: test build
+test:
+	@echo "Add real tests here"; exit 0
+build:
+	@echo "Add real build here"; exit 0
+smoke:
+	@./scripts/blitzy-smoke.sh
+tag-baseline:
+	@git tag -a v0.1.0 -m "Baseline ready for Blitzy" || true
+	@git push origin v0.1.0 || true
