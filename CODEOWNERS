@@ -1,0 +1,168 @@
+# CODEOWNERS for Veria Compliance Middleware Platform
+# This file enforces review requirements in GitHub pull requests, ensuring changes 
+# are reviewed by appropriate team members before merging. Patterns are matched 
+# from bottom to top - more specific patterns override general ones.
+
+# =============================================================================
+# DEFAULT OWNERSHIP
+# =============================================================================
+# Default owners for everything in the repository
+* @veria-platform/core-team
+
+# =============================================================================
+# INFRASTRUCTURE & OPERATIONS
+# =============================================================================
+
+# Terraform Infrastructure as Code - DevOps Team
+/infra/ @veria-platform/devops-team @veria-platform/security-team
+/infra/terraform/ @veria-platform/devops-team @veria-platform/infrastructure-team
+/infra/terraform/modules/ @veria-platform/devops-team @veria-platform/infrastructure-team
+/infra/terraform/envs/ @veria-platform/devops-team @veria-platform/infrastructure-team
+/infra/monitoring/ @veria-platform/devops-team @veria-platform/sre-team
+
+# CI/CD Workflows and GitHub Actions - DevOps & Security Teams
+/.github/ @veria-platform/devops-team @veria-platform/security-team
+/.github/workflows/ @veria-platform/devops-team @veria-platform/security-team
+/.github/workflows/ci.yml @veria-platform/devops-team @veria-platform/security-team
+/.github/workflows/cd.yml @veria-platform/devops-team @veria-platform/security-team
+/.github/workflows/*deploy*.yml @veria-platform/devops-team @veria-platform/infrastructure-team
+/.github/workflows/*security*.yml @veria-platform/security-team @veria-platform/devops-team
+/.github/workflows/smoke-test.yml @veria-platform/devops-team @veria-platform/sre-team
+
+# Container and Deployment Configurations
+/Dockerfile @veria-platform/devops-team @veria-platform/infrastructure-team
+/docker-compose.yml @veria-platform/devops-team @veria-platform/backend-team
+/cloudrun.yaml @veria-platform/devops-team @veria-platform/infrastructure-team
+/infra/cloudrun*.yaml @veria-platform/devops-team @veria-platform/infrastructure-team
+
+# Build and Package Management
+/package.json @veria-platform/backend-team @veria-platform/frontend-team
+/pnpm-workspace.yaml @veria-platform/backend-team @veria-platform/frontend-team
+/pnpm-lock.yaml @veria-platform/backend-team @veria-platform/frontend-team
+
+# =============================================================================
+# SECURITY & COMPLIANCE
+# =============================================================================
+
+# Security Documentation and Policies - Security & Compliance Teams
+/docs/security-boundaries.md @veria-platform/security-team @veria-platform/compliance-team
+/docs/policies/ @veria-platform/security-team @veria-platform/compliance-team
+/docs/deploy/oidc.md @veria-platform/security-team @veria-platform/devops-team
+/docs/reports/WIF_*.md @veria-platform/security-team @veria-platform/devops-team
+
+# Authentication and Authorization Middleware
+/packages/auth-middleware/ @veria-platform/security-team @veria-platform/backend-team
+/services/identity-service/ @veria-platform/security-team @veria-platform/backend-team
+
+# Compliance Services and Audit
+/services/compliance-service/ @veria-platform/compliance-team @veria-platform/backend-team
+/services/audit-log-writer/ @veria-platform/compliance-team @veria-platform/security-team
+/services/policy-service/ @veria-platform/compliance-team @veria-platform/backend-team
+/packages/compliance_middleware/ @veria-platform/compliance-team @veria-platform/backend-team
+
+# Database Security and Schema
+/packages/database/ @veria-platform/backend-team @veria-platform/security-team
+/infra/database/ @veria-platform/backend-team @veria-platform/security-team
+
+# Security Configuration Files
+.env.example @veria-platform/security-team @veria-platform/devops-team
+/infra/ci/ @veria-platform/security-team @veria-platform/devops-team
+
+# =============================================================================
+# BACKEND SERVICES
+# =============================================================================
+
+# Core Backend Services - Backend Team
+/services/ @veria-platform/backend-team
+/services/gateway/ @veria-platform/backend-team @veria-platform/devops-team
+/services/ai-broker/ @veria-platform/backend-team @veria-platform/ai-team
+/services/blockchain-service/ @veria-platform/blockchain-team @veria-platform/backend-team
+/services/kyc-provider/ @veria-platform/compliance-team @veria-platform/backend-team
+/services/regulatory-reporting/ @veria-platform/compliance-team @veria-platform/backend-team
+/services/tool-masker/ @veria-platform/backend-team @veria-platform/security-team
+/services/graph-service/ @veria-platform/backend-team @veria-platform/ai-team
+
+# Shared Backend Packages
+/packages/sdk-ts/ @veria-platform/backend-team @veria-platform/api-team
+/packages/edge_proxy/ @veria-platform/backend-team @veria-platform/devops-team
+/packages/blockchain/ @veria-platform/blockchain-team @veria-platform/backend-team
+/packages/mcp/ @veria-platform/backend-team @veria-platform/ai-team
+
+# =============================================================================
+# FRONTEND APPLICATIONS
+# =============================================================================
+
+# Frontend Applications - Frontend Team
+/apps/ @veria-platform/frontend-team
+/apps/frontend/ @veria-platform/frontend-team @veria-platform/ui-team
+/apps/investor/ @veria-platform/frontend-team @veria-platform/product-team
+/apps/compliance-dashboard/ @veria-platform/frontend-team @veria-platform/compliance-team
+
+# Frontend Shared Types and Packages
+/packages/types-investor/ @veria-platform/frontend-team @veria-platform/product-team
+/packages/domain-packs/ @veria-platform/frontend-team @veria-platform/ai-team
+
+# =============================================================================
+# SMART CONTRACTS & BLOCKCHAIN
+# =============================================================================
+
+# Smart Contracts and Blockchain Infrastructure
+/contracts/ @veria-platform/blockchain-team @veria-platform/security-team
+/connectors/ @veria-platform/backend-team @veria-platform/integration-team
+
+# =============================================================================
+# DOCUMENTATION & OPERATIONS
+# =============================================================================
+
+# Core Documentation
+/README.md @veria-platform/core-team @veria-platform/tech-writers
+/docs/ @veria-platform/tech-writers @veria-platform/core-team
+/docs/prds/ @veria-platform/product-team @veria-platform/tech-writers
+/docs/runbooks/ @veria-platform/sre-team @veria-platform/devops-team
+/docs/tech-specs/ @veria-platform/core-team @veria-platform/tech-writers
+
+# API Documentation
+/docs/API.md @veria-platform/api-team @veria-platform/backend-team
+/docs/openapi/ @veria-platform/api-team @veria-platform/backend-team
+
+# Operational Scripts
+/scripts/ @veria-platform/devops-team @veria-platform/sre-team
+/blitzy/ @veria-platform/devops-team @veria-platform/automation-team
+/handoff/ @veria-platform/devops-team @veria-platform/core-team
+
+# Testing Infrastructure
+/tests/ @veria-platform/qa-team @veria-platform/backend-team
+
+# =============================================================================
+# SPECIAL FILES & CONFIGURATIONS
+# =============================================================================
+
+# Repository Configuration
+.gitignore @veria-platform/core-team
+.dockerignore @veria-platform/devops-team
+/VERSION.txt @veria-platform/core-team @veria-platform/devops-team
+
+# Python Configuration
+/pyproject.toml @veria-platform/backend-team @veria-platform/devops-team
+
+# Blitzy and Automation
+/BLITZY_SETUP.md @veria-platform/devops-team @veria-platform/automation-team
+/PRD.md @veria-platform/product-team @veria-platform/core-team
+
+# Code Ownership itself - Core Team with Security oversight
+/CODEOWNERS @veria-platform/core-team @veria-platform/security-team
+
+# =============================================================================
+# CRITICAL SECURITY FILES (Require Additional Security Review)
+# =============================================================================
+
+# Files that require mandatory security team approval regardless of other ownership
+**/*secret* @veria-platform/security-team
+**/*password* @veria-platform/security-team
+**/*key* @veria-platform/security-team
+**/*token* @veria-platform/security-team
+**/*auth* @veria-platform/security-team
+**/oidc.* @veria-platform/security-team
+**/wif.* @veria-platform/security-team
+**/*security* @veria-platform/security-team
+**/*compliance* @veria-platform/compliance-team
