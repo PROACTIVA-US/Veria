@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Veria Policy Ruleset",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "jurisdictions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "allow": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "allow"
+        ]
+      }
+    },
+    "quotas": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "rps": {
+            "type": "number",
+            "minimum": 0
+          },
+          "burst": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "rps",
+          "burst"
+        ]
+      }
+    },
+    "redaction": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "fields"
+      ]
+    },
+    "denyList": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "version",
+    "jurisdictions",
+    "quotas",
+    "redaction",
+    "denyList"
+  ]
+}

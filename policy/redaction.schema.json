@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Redaction Map",
+  "type": "object",
+  "properties": {
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "strategy": {
+      "type": "string",
+      "enum": [
+        "mask",
+        "drop",
+        "hash"
+      ]
+    }
+  },
+  "required": [
+    "fields",
+    "strategy"
+  ]
+}

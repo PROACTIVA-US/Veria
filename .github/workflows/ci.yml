@@ -78,7 +78,25 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
+      # --- Veria Policy Tests (Agent-Era) ---
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Run policy regression tests
+        run: |
+          python policy/veria_policy_cli.py run-tests \
+            --policy policy/policy.example.json \
+            --tests policy/tests.yaml
+      # --- /Veria Policy Tests ---
+
       - name: Build packages first
         run: pnpm run build:packages || true
         

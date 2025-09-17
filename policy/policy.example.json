@@ -1,0 +1,44 @@
+{
+  "version": "2025-09-16.1",
+  "jurisdictions": {
+    "US": {
+      "allow": true
+    },
+    "EU": {
+      "allow": true
+    },
+    "OFAC": {
+      "allow": false
+    }
+  },
+  "quotas": {
+    "default": {
+      "rps": 5,
+      "burst": 10
+    },
+    "org:acme": {
+      "rps": 20,
+      "burst": 40
+    }
+  },
+  "redaction": {
+    "fields": [
+      "ssn",
+      "accountNumber",
+      "taxId"
+    ],
+    "rules": [
+      {
+        "path": "$.payload.bankAccount",
+        "action": "mask"
+      }
+    ]
+  },
+  "denyList": [
+    "subject:bad-actor-123"
+  ],
+  "obligations": [
+    "log.policy.decision",
+    "notify.risk.on.deny"
+  ]
+}
