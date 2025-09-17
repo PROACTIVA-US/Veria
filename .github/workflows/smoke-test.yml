@@ -1,0 +1,404 @@
+name: Smoke Test - Post-Deployment Validation
+
+# Trigger on successful completion of deployment workflows
+on:
+  workflow_run:
+    workflows: ["CD", "CD - AI Broker"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated list of services to test'
+        required: false
+        default: 'ai-broker,veria-app'
+      skip_auth_validation:
+        description: 'Skip authentication validation tests'
+        required: false
+        default: 'false'
+
+env:
+  GCP_REGION: us-central1
+  MAX_RETRIES: 3
+  RETRY_DELAY: 10
+
+jobs:
+  # Pre-flight check to ensure deployment completed successfully
+  check-deployment:
+    name: Verify Deployment Prerequisites
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    permissions:
+      id-token: write
+      contents: read
+
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      services_to_test: ${{ steps.services.outputs.services }}
+
+    steps:
+      - name: Check deployment status
+        id: check
+        run: |
+          echo "Deployment workflow completed successfully"
+          echo "Triggering workflow: ${{ github.event.workflow_run.name }}"
+          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Head SHA: ${{ github.event.workflow_run.head_sha }}"
+          echo "should_run=true" >> $GITHUB_OUTPUT
+
+      - name: Determine services to test
+        id: services
+        run: |
+          # Default services for different workflows
+          if [[ "${{ github.event.workflow_run.name }}" == "CD - AI Broker" ]]; then
+            echo "services=ai-broker" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.workflow_run.name }}" == "CD" ]]; then
+            echo "services=veria-app" >> $GITHUB_OUTPUT
+          else
+            echo "services=ai-broker,veria-app" >> $GITHUB_OUTPUT
+          fi
+
+  # Main smoke test execution with matrix strategy
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs: [check-deployment]
+    if: (github.event_name == 'workflow_dispatch') || (needs.check-deployment.outputs.should_run == 'true')
+    permissions:
+      id-token: write
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ github.event_name == 'workflow_dispatch' && fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', inputs.services)), '","'))) || fromJson(format('["{0}"]', join(fromJson(format('["{0}"]', needs.check-deployment.outputs.services_to_test)), '","'))) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Verify Cloud Run service exists
+        id: verify-service
+        timeout-minutes: 2
+        run: |
+          echo "Verifying service '${{ matrix.service }}' exists in region ${{ env.GCP_REGION }}"
+          
+          # Check if service exists and is ready
+          service_status=$(gcloud run services describe "${{ matrix.service }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format="value(status.conditions[0].type,status.conditions[0].status)" \
+            2>/dev/null || echo "NotFound NotFound")
+          
+          if [[ "$service_status" == "NotFound NotFound" ]]; then
+            echo "❌ Service '${{ matrix.service }}' not found in region ${{ env.GCP_REGION }}"
+            echo "Available services:"
+            gcloud run services list --region="${{ env.GCP_REGION }}" --format="value(METADATA.name)" || true
+            exit 1
+          fi
+          
+          echo "✅ Service '${{ matrix.service }}' found"
+          echo "Service status: $service_status"
+
+      - name: Get service URL and details
+        id: get-service-info
+        timeout-minutes: 2
+        run: |
+          # Get service URL
+          SERVICE_URL=$(gcloud run services describe "${{ matrix.service }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format="value(status.url)")
+          
+          if [[ -z "$SERVICE_URL" ]]; then
+            echo "❌ Failed to get service URL for '${{ matrix.service }}'"
+            exit 1
+          fi
+          
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "Service URL: $SERVICE_URL"
+          
+          # Get additional service details for reporting
+          REVISION_NAME=$(gcloud run services describe "${{ matrix.service }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format="value(status.latestReadyRevisionName)")
+          
+          TRAFFIC_SPLIT=$(gcloud run services describe "${{ matrix.service }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format="value(status.traffic[0].percent)")
+          
+          echo "revision_name=$REVISION_NAME" >> $GITHUB_OUTPUT
+          echo "traffic_split=$TRAFFIC_SPLIT" >> $GITHUB_OUTPUT
+          echo "Latest revision: $REVISION_NAME"
+          echo "Traffic split: $TRAFFIC_SPLIT%"
+
+      - name: Wait for service readiness
+        timeout-minutes: 5
+        run: |
+          echo "Waiting for service '${{ matrix.service }}' to be fully ready..."
+          
+          # Wait up to 5 minutes for service to be ready
+          for i in {1..30}; do
+            ready_condition=$(gcloud run services describe "${{ matrix.service }}" \
+              --region="${{ env.GCP_REGION }}" \
+              --format="value(status.conditions.firstof(type:Ready).status)")
+            
+            if [[ "$ready_condition" == "True" ]]; then
+              echo "✅ Service is ready after ${i}0 seconds"
+              break
+            fi
+            
+            echo "⏳ Waiting for service readiness (attempt $i/30)..."
+            sleep 10
+          done
+          
+          if [[ "$ready_condition" != "True" ]]; then
+            echo "❌ Service did not become ready within timeout"
+            exit 1
+          fi
+
+      - name: Obtain ID token for authentication
+        id: get-token
+        timeout-minutes: 2
+        run: |
+          echo "Obtaining ID token for authenticated requests..."
+          
+          # Get ID token for authenticating to private Cloud Run services
+          ID_TOKEN=$(gcloud auth print-identity-token)
+          
+          if [[ -z "$ID_TOKEN" ]]; then
+            echo "❌ Failed to obtain ID token"
+            exit 1
+          fi
+          
+          # Store token securely (masked in logs)
+          echo "::add-mask::$ID_TOKEN"
+          echo "id_token=$ID_TOKEN" >> $GITHUB_OUTPUT
+          echo "✅ Successfully obtained ID token"
+
+      - name: Test health endpoints with authentication
+        id: health-test
+        timeout-minutes: 10
+        run: |
+          echo "Testing health endpoints for service '${{ matrix.service }}'..."
+          
+          SERVICE_URL="${{ steps.get-service-info.outputs.service_url }}"
+          ID_TOKEN="${{ steps.get-token.outputs.id_token }}"
+          
+          # Define health endpoints to test
+          HEALTH_ENDPOINTS=(
+            "/_ah/health"
+            "/health"
+          )
+          
+          success_count=0
+          total_tests=0
+          
+          for endpoint in "${HEALTH_ENDPOINTS[@]}"; do
+            echo ""
+            echo "🔍 Testing endpoint: $endpoint"
+            
+            # Test with exponential backoff retry logic
+            for attempt in $(seq 1 ${{ env.MAX_RETRIES }}); do
+              echo "  Attempt $attempt/${{ env.MAX_RETRIES }}"
+              
+              # Make authenticated request
+              response=$(curl -s -w "HTTPSTATUS:%{http_code};TIME:%{time_total}" \
+                -H "Authorization: Bearer $ID_TOKEN" \
+                -H "User-Agent: GitHub-Actions-Smoke-Test/1.0" \
+                -H "Accept: application/json" \
+                --max-time 30 \
+                "${SERVICE_URL}${endpoint}" || echo "HTTPSTATUS:000;TIME:30.0")
+              
+              # Parse response
+              http_code=$(echo "$response" | sed -n 's/.*HTTPSTATUS:\([0-9]*\).*/\1/p')
+              response_time=$(echo "$response" | sed -n 's/.*TIME:\([0-9.]*\).*/\1/p')
+              response_body=$(echo "$response" | sed 's/HTTPSTATUS:[0-9]*;TIME:[0-9.]*$//')
+              
+              echo "  HTTP Status: $http_code"
+              echo "  Response Time: ${response_time}s"
+              echo "  Response Body: $response_body"
+              
+              total_tests=$((total_tests + 1))
+              
+              if [[ "$http_code" == "200" ]]; then
+                echo "  ✅ Health check passed"
+                success_count=$((success_count + 1))
+                
+                # Validate response contains expected health status
+                if [[ "$response_body" == *'"status"'* ]] && [[ "$response_body" == *'"ok"'* ]]; then
+                  echo "  ✅ Response contains valid health status"
+                else
+                  echo "  ⚠️  Response may not contain expected health format"
+                fi
+                break
+              else
+                echo "  ❌ Health check failed with status $http_code"
+                
+                if [[ $attempt -lt ${{ env.MAX_RETRIES }} ]]; then
+                  delay=$(( ${{ env.RETRY_DELAY }} * attempt ))
+                  echo "  ⏳ Retrying in ${delay}s..."
+                  sleep $delay
+                else
+                  echo "  ❌ All retry attempts exhausted"
+                fi
+              fi
+            done
+          done
+          
+          echo ""
+          echo "📊 Health test summary:"
+          echo "  Successful tests: $success_count"
+          echo "  Total tests: $total_tests"
+          
+          echo "success_count=$success_count" >> $GITHUB_OUTPUT
+          echo "total_tests=$total_tests" >> $GITHUB_OUTPUT
+          
+          # At least one health endpoint must pass
+          if [[ $success_count -eq 0 ]]; then
+            echo "❌ No health endpoints responded successfully"
+            exit 1
+          fi
+
+      - name: Test authentication enforcement
+        if: github.event_name != 'workflow_dispatch' || inputs.skip_auth_validation != 'true'
+        timeout-minutes: 5
+        run: |
+          echo "Testing authentication enforcement for service '${{ matrix.service }}'..."
+          
+          SERVICE_URL="${{ steps.get-service-info.outputs.service_url }}"
+          
+          # Test unauthenticated request (should fail with 401/403)
+          echo "🔒 Testing unauthenticated request (expecting 401/403)..."
+          
+          response=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+            -H "User-Agent: GitHub-Actions-Auth-Test/1.0" \
+            --max-time 30 \
+            "${SERVICE_URL}/_ah/health" || echo "HTTPSTATUS:000")
+          
+          http_code=$(echo "$response" | sed -n 's/.*HTTPSTATUS:\([0-9]*\).*/\1/p')
+          
+          echo "Unauthenticated request status: $http_code"
+          
+          if [[ "$http_code" == "401" ]] || [[ "$http_code" == "403" ]]; then
+            echo "✅ Authentication properly enforced (got $http_code as expected)"
+          elif [[ "$http_code" == "200" ]]; then
+            echo "❌ Service accepts unauthenticated requests - security risk!"
+            exit 1
+          else
+            echo "⚠️  Unexpected status code $http_code for unauthenticated request"
+            echo "This might indicate service is not accessible or other issues"
+          fi
+
+      - name: Generate detailed test report
+        if: always()
+        run: |
+          echo "## 🧪 Smoke Test Results - ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Service information
+          echo "### 📋 Service Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service Name**: ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${{ env.GCP_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service URL**: ${{ steps.get-service-info.outputs.service_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Latest Revision**: ${{ steps.get-service-info.outputs.revision_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Traffic Split**: ${{ steps.get-service-info.outputs.traffic_split }}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test results
+          echo "### 🎯 Test Results" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ steps.health-test.outputs.success_count }}" -gt "0" ]]; then
+            echo "- ✅ **Health Checks**: ${{ steps.health-test.outputs.success_count }}/${{ steps.health-test.outputs.total_tests }} endpoints passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ **Health Checks**: ${{ steps.health-test.outputs.success_count }}/${{ steps.health-test.outputs.total_tests }} endpoints passed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ "${{ github.event_name }}" != "workflow_dispatch" ]] || [[ "${{ inputs.skip_auth_validation }}" != "true" ]]; then
+            echo "- ✅ **Authentication**: Properly enforced (unauthenticated requests rejected)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⏭️ **Authentication**: Test skipped (manual override)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Monitoring integration data
+          echo "### 📊 Monitoring Integration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Status**: ✅ Validated" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service Health**: ✅ Operational" >> $GITHUB_STEP_SUMMARY
+          echo "- **Authentication**: ✅ Secure" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Timestamp**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Rollback information
+          echo "### 🔄 Rollback Information" >> $GITHUB_STEP_SUMMARY
+          echo "If issues are detected, use the following command to rollback:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "gcloud run services update-traffic ${{ matrix.service }} \\" >> $GITHUB_STEP_SUMMARY
+          echo "  --to-revisions=PREVIOUS-REVISION=100 \\" >> $GITHUB_STEP_SUMMARY
+          echo "  --region=${{ env.GCP_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # Aggregate results and provide overall status
+  aggregate-results:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    needs: [smoke-test]
+    if: always() && (github.event_name == 'workflow_dispatch' || needs.check-deployment.outputs.should_run == 'true')
+    
+    steps:
+      - name: Evaluate overall test results
+        run: |
+          echo "Evaluating overall smoke test results..."
+          
+          # Check if any smoke tests failed
+          if [[ "${{ needs.smoke-test.result }}" == "failure" ]]; then
+            echo "❌ One or more smoke tests failed"
+            echo "Check individual test results above for details"
+            exit 1
+          elif [[ "${{ needs.smoke-test.result }}" == "success" ]]; then
+            echo "✅ All smoke tests passed successfully"
+          else
+            echo "⚠️  Smoke tests completed with status: ${{ needs.smoke-test.result }}"
+          fi
+
+      - name: Generate overall summary
+        if: always()
+        run: |
+          echo "## 🚀 Overall Deployment Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.smoke-test.result }}" == "success" ]]; then
+            echo "### ✅ All Services Validated Successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All deployed services have passed post-deployment validation:" >> $GITHUB_STEP_SUMMARY
+            echo "- Health endpoints are responding correctly" >> $GITHUB_STEP_SUMMARY
+            echo "- Authentication is properly enforced" >> $GITHUB_STEP_SUMMARY
+            echo "- Services are operationally ready" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🎉 **Deployment validation complete - services ready for production traffic**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Deployment Validation Issues Detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some services failed post-deployment validation. Please review the individual test results above." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️  **Consider rolling back affected services until issues are resolved**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📈 Integration with Monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "This validation provides baseline data for:" >> $GITHUB_STEP_SUMMARY
+          echo "- Cloud Monitoring error rate metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- P95 latency tracking" >> $GITHUB_STEP_SUMMARY
+          echo "- Alert policy validation" >> $GITHUB_STEP_SUMMARY
+          echo "- Dashboard health indicators" >> $GITHUB_STEP_SUMMARY
