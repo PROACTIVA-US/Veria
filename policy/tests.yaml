@@ -1,0 +1,40 @@
+# Regression tests for Policy Engine (run in CI)
+
+tests:
+  - name: allow_US_under_quota
+    input:
+      subject: "subject:good-1"
+      org: "org:acme"
+      jurisdiction: "US"
+      rps_req: 1
+    expect: { decision: "ALLOW" }
+
+  - name: deny_OFAC
+    input:
+      subject: "subject:good-2"
+      org: "org:acme"
+      jurisdiction: "OFAC"
+    expect: { decision: "DENY", reason: "jurisdiction" }
+
+  - name: freeze_subject
+    setup:
+      freeze: "subject:bad-actor-123"
+    input:
+      subject: "subject:bad-actor-123"
+      org: "org:acme"
+      jurisdiction: "US"
+    expect: { decision: "DENY", reason: "frozen" }
+
+  - name: redact_sensitive_fields
+    input:
+      subject: "subject:good-3"
+      org: "org:acme"
+      jurisdiction: "US"
+      payload:
+        ssn: "123-45-6789"
+        accountNumber: "000111222"
+    expect:
+      decision: "ALLOW"
+      redacted:
+        ssn: "***-**-****"
+        accountNumber: "*********"

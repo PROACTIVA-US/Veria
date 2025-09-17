@@ -37,5 +37,9 @@ A standard web application for managing tokenized asset compliance, using conven
 3. Reference PRD.md for requirements
 4. Generate standard web UI components only
 
+### Policy & Provenance (Agent-Era)
+- Env: `POLICY_PATH=policy/policy.example.json`
+- Run local policy tests: `python policy/veria_policy_cli.py run-tests --policy policy/policy.example.json --tests policy/tests.yaml`
+
 ### Contact
 Repository prepared for Blitzy handoff on September 2025.

@@ -1,0 +1,13 @@
+{
+  "name": "veria.quickbooks.connector",
+  "version": "1.0.0",
+  "scopes": [
+    "read:qb.accounts",
+    "write:qb.journal"
+  ],
+  "endpoints": [
+    "/qb/sync",
+    "/qb/webhook"
+  ],
+  "signature": "<signed-by-veria>"
+}

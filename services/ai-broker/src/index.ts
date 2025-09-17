@@ -7,6 +7,20 @@ import suggestRouter from './routes/suggest.js';
 const PORT = Number(process.env.PORT || 4001);
 const app = express();
 
+// == Veria Policy/Provenance (Agent-Era) ==
+import { policyEngine } from './middleware/policyEngine.js';
+import { provenanceLogger } from './middleware/provenance.js';
+import fs from 'fs/promises';
+
+async function loadPolicy() {
+  const raw = await fs.readFile(process.env.POLICY_PATH || 'policy/policy.example.json','utf8');
+  return JSON.parse(raw);
+}
+
+app.use(provenanceLogger());
+app.use(await policyEngine(loadPolicy));
+// == /Veria Policy/Provenance ==
+
 // Middleware
 app.use(express.json({ limit: '2mb' }));
 app.use(cors());

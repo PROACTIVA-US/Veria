@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Quota",
+  "type": "object",
+  "properties": {
+    "rps": {
+      "type": "number"
+    },
+    "burst": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "rps",
+    "burst"
+  ]
+}
