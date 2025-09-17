@@ -78,7 +78,7 @@ export function policyEngine(load: PolicyLoader) {
 
         if (cachedDecision.decision === 'DENY') {
           attachProvenance(res, reqId, subject, org, policy.version, 'DENY', cachedDecision.reason);
-          metrics.counter('policy.decision', 1, { decision: 'DENY', reason: cachedDecision.reason, cached: true });
+          metrics.counter('policy.decision', 1, { decision: 'DENY', reason: cachedDecision.reason || 'unknown', cached: true });
           metrics.histogram('policy.decision.latency', Date.now() - startTime);
 
           const statusCode = cachedDecision.reason === 'rate_limit_exceeded' ? 429 : 403;
