@@ -1,144 +1,193 @@
-# Input variables for the Workload Identity Federation module
-# These variables enable configuration of the WIF setup for different environments and repositories
+# =================================================================
+# Workload Identity Federation Module Variables
+# =================================================================
+# Input variables for the Workload Identity Federation module.
+# Defines parameters for GCP project configuration, GitHub repository
+# details, branch conditions for environment separation, pool and
+# provider naming, service account configuration, and optional API
+# enablement. All variables include appropriate types, descriptions,
+# and sensible defaults where applicable.
+#
+# This module enables reusable WIF configurations across multiple
+# environments (dev, staging, prod) with customizable naming and
+# branch-based access restrictions.
+# =================================================================
+
+# -----------------------------------------------------------------
+# GCP Project Configuration
+# -----------------------------------------------------------------
 
 variable "project_id" {
-  description = "GCP Project ID where the WIF resources will be created"
+  description = "GCP Project ID where WIF resources will be created"
   type        = string
+  default     = "veria-dev"
+
   validation {
-    condition     = length(var.project_id) > 0
-    error_message = "Project ID must be provided and cannot be empty."
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.project_id))
+    error_message = "Project ID must start with a lowercase letter, contain only lowercase letters, numbers, and hyphens, and end with a lowercase letter or number."
   }
 }
+
+variable "region" {
+  description = "GCP Region for resource deployment (affects resource naming and location constraints)"
+  type        = string
+  default     = "us-central1"
+
+  validation {
+    condition     = can(regex("^[a-z]+-[a-z]+[0-9]+$", var.region))
+    error_message = "Region must be in valid GCP region format (e.g., us-central1, europe-west1)."
+  }
+}
+
+# -----------------------------------------------------------------
+# GitHub Integration Configuration
+# -----------------------------------------------------------------
 
 variable "repository" {
-  description = "GitHub repository in format 'owner/repo' that will authenticate via WIF"
+  description = "GitHub repository in format owner/repo for OIDC integration"
   type        = string
+  default     = "PROACTIVA-US/Veria"
+
   validation {
-    condition     = can(regex("^[^/]+/[^/]+$", var.repository))
-    error_message = "Repository must be in format 'owner/repo'."
+    condition     = can(regex("^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", var.repository))
+    error_message = "Repository must be in format 'owner/repo' using valid GitHub naming conventions."
   }
 }
 
-variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod) for resource naming and identification"
+variable "attribute_condition" {
+  description = "Branch/tag condition for environment-specific access restrictions (e.g., 'refs/heads/main', 'refs/heads/staging'). Empty string allows all branches."
   type        = string
-  default     = "dev"
+  default     = ""
+
   validation {
-    condition     = contains(["dev", "development", "staging", "stage", "prod", "production"], var.environment)
-    error_message = "Environment must be one of: dev, development, staging, stage, prod, production."
+    condition = var.attribute_condition == "" || can(regex("^refs/(heads|tags)/[A-Za-z0-9_./\\-]+$", var.attribute_condition))
+    error_message = "Attribute condition must be empty or match Git refs format like 'refs/heads/main' or 'refs/tags/v1.0'."
   }
 }
 
-# Workload Identity Pool configuration variables
+# -----------------------------------------------------------------
+# WIF Pool and Provider Configuration
+# -----------------------------------------------------------------
+
 variable "pool_id" {
-  description = "Workload Identity Pool ID (must be unique within the project)"
+  description = "Workload Identity Pool ID for multi-environment support. Must be unique within the project."
   type        = string
   default     = "github-pool"
+
   validation {
-    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.pool_id))
-    error_message = "Pool ID must start with a lowercase letter, contain only lowercase letters, numbers, and hyphens, and end with an alphanumeric character."
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.pool_id)) && length(var.pool_id) <= 32
+    error_message = "Pool ID must start with lowercase letter, contain only lowercase letters, numbers, and hyphens, end with letter or number, and be max 32 characters."
   }
 }
 
-variable "pool_display_name" {
-  description = "Human-readable display name for the Workload Identity Pool"
-  type        = string
-  default     = "GitHub Actions Pool"
-}
-
-# Workload Identity Provider configuration variables
 variable "provider_id" {
-  description = "Workload Identity Provider ID (must be unique within the pool)"
+  description = "Workload Identity Provider ID for GitHub OIDC integration. Must be unique within the pool."
   type        = string
   default     = "github-provider"
+
   validation {
-    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.provider_id))
-    error_message = "Provider ID must start with a lowercase letter, contain only lowercase letters, numbers, and hyphens, and end with an alphanumeric character."
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.provider_id)) && length(var.provider_id) <= 32
+    error_message = "Provider ID must start with lowercase letter, contain only lowercase letters, numbers, and hyphens, end with letter or number, and be max 32 characters."
   }
 }
 
-variable "provider_display_name" {
-  description = "Human-readable display name for the Workload Identity Provider"
-  type        = string
-  default     = "GitHub OIDC Provider"
-}
+# -----------------------------------------------------------------
+# Service Account Configuration
+# -----------------------------------------------------------------
 
-# Attribute condition for branch and repository restrictions
-variable "attribute_condition" {
-  description = "CEL expression for attribute-based access control (e.g., branch restrictions). Example: 'attribute.ref==\"refs/heads/main\"' to restrict to main branch only"
+variable "service_account_name" {
+  description = "Service Account ID for deployment operations. Must be unique within the project."
   type        = string
-  default     = null
-  
-  validation {
-    condition = var.attribute_condition == null || (
-      var.attribute_condition != "" && 
-      can(regex("attribute\\.", var.attribute_condition))
-    )
-    error_message = "Attribute condition must be null or a non-empty CEL expression referencing attribute fields."
-  }
-}
+  default     = "veria-deployer"
 
-# Service Account configuration variables
-variable "service_account_id" {
-  description = "Service Account ID for CI/CD operations (must be unique within the project)"
-  type        = string
-  default     = "github-actions-ci"
   validation {
-    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.service_account_id)) && length(var.service_account_id) <= 30
-    error_message = "Service Account ID must be 30 characters or less, start with a lowercase letter, and contain only lowercase letters, numbers, and hyphens."
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.service_account_name)) && length(var.service_account_name) <= 30 && length(var.service_account_name) >= 6
+    error_message = "Service account name must be 6-30 characters, start with lowercase letter, contain only lowercase letters, numbers, and hyphens, and end with letter or number."
   }
 }
 
 variable "service_account_display_name" {
-  description = "Human-readable display name for the CI/CD service account"
+  description = "Human-readable display name for the service account"
   type        = string
-  default     = "GitHub Actions CI/CD"
-}
+  default     = "Veria Deployer"
 
-# IAM roles to grant to the service account
-variable "service_account_roles" {
-  description = "List of IAM roles to grant to the service account for CI/CD operations"
-  type        = list(string)
-  default = [
-    "roles/run.admin",
-    "roles/iam.serviceAccountUser",
-    "roles/artifactregistry.writer"
-  ]
-  
   validation {
-    condition = alltrue([
-      for role in var.service_account_roles : can(regex("^roles/", role))
-    ])
-    error_message = "All roles must start with 'roles/' prefix."
+    condition     = length(var.service_account_display_name) <= 100
+    error_message = "Service account display name must be 100 characters or less."
   }
 }
 
-# Additional APIs to enable (beyond the core WIF APIs)
-variable "additional_apis" {
-  description = "Additional GCP APIs to enable for the CI/CD service account operations"
+variable "service_account_description" {
+  description = "Description of the service account's purpose and permissions"
+  type        = string
+  default     = "Service account for GitHub Actions deployment with WIF authentication"
+
+  validation {
+    condition     = length(var.service_account_description) <= 256
+    error_message = "Service account description must be 256 characters or less."
+  }
+}
+
+# -----------------------------------------------------------------
+# Environment and Naming Configuration
+# -----------------------------------------------------------------
+
+variable "environment" {
+  description = "Environment identifier for resource naming and descriptions (e.g., dev, staging, prod)"
+  type        = string
+  default     = "dev"
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.environment))
+    error_message = "Environment must contain only lowercase letters, numbers, and hyphens, starting and ending with alphanumeric characters."
+  }
+}
+
+# -----------------------------------------------------------------
+# Optional API Management
+# -----------------------------------------------------------------
+
+variable "enable_apis" {
+  description = "Whether to enable required GCP APIs. Set to false if APIs are managed externally."
+  type        = bool
+  default     = true
+}
+
+variable "required_apis" {
+  description = "List of GCP APIs required for WIF functionality"
   type        = list(string)
   default = [
-    "run.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
     "artifactregistry.googleapis.com",
+    "run.googleapis.com",
     "cloudbuild.googleapis.com"
   ]
-  
+
   validation {
-    condition = alltrue([
-      for api in var.additional_apis : can(regex("\\.googleapis\\.com$", api))
-    ])
-    error_message = "All APIs must end with '.googleapis.com'."
+    condition     = length(var.required_apis) > 0
+    error_message = "At least one API must be specified in the required_apis list."
   }
 }
 
-# Branch pattern for environment-specific access control
-variable "branch_pattern" {
-  description = "Git branch pattern for this environment (e.g., 'refs/heads/main', 'refs/heads/staging'). Used to auto-generate attribute_condition if not explicitly provided."
-  type        = string
-  default     = "refs/heads/main"
-  
+# -----------------------------------------------------------------
+# Advanced Configuration
+# -----------------------------------------------------------------
+
+variable "disable_dependent_services" {
+  description = "Whether to disable dependent services when destroying resources. Use with caution in shared projects."
+  type        = bool
+  default     = false
+}
+
+variable "tags" {
+  description = "Resource tags for organization and cost tracking"
+  type        = map(string)
+  default     = {}
+
   validation {
-    condition     = can(regex("^refs/heads/", var.branch_pattern))
-    error_message = "Branch pattern must start with 'refs/heads/' to match GitHub OIDC token format."
+    condition     = length(var.tags) <= 64
+    error_message = "Maximum of 64 tags allowed per resource."
   }
 }
