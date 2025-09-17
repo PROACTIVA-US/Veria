@@ -1,0 +1,36 @@
+# Copy to staging.auto.tfvars and edit values
+# This file provides template configuration values for staging environment
+# SECURITY WARNING: Never commit secrets - supply sensitive values via CI/CD secrets or tfvars injected at runtime
+
+# Staging Environment Configuration
+gcp_project = "veria-staging"
+gcp_region  = "us-central1"
+
+# External Service Configuration
+cloudflare_api_token = "PLACEHOLDER_TOKEN_SUPPLY_VIA_CI_SECRETS"
+cloudflare_zone      = "veria.us"
+root_domain          = "veria.us"
+
+# Workload Identity Federation Configuration
+# These parameters configure GitHub OIDC/WIF authentication for staging deployments
+github_repository = "PROACTIVA-US/Veria"
+branch_condition = "refs/heads/staging"
+
+# Infrastructure toggles
+create_artifact_registry = true
+create_network           = true
+enable_dns_examples      = false
+
+# Cloud Run Configuration - Staging Environment
+# Resource Requirements: 1 vCPU, 512Mi memory, 0-5 instances for staging capacity
+enable_cloud_run         = false  # Set to true when staging image is available
+cr_service_name          = "ai-broker"
+cr_image                 = "us-central1-docker.pkg.dev/veria-staging/veria/ai-broker:staging"
+cr_env = { 
+  ENV = "staging"
+}
+cr_min_instances = 0
+cr_max_instances = 5
+cr_cpu = "1"
+cr_memory = "512Mi"
+cr_allow_unauthenticated = false  # Staging maintains private-only access with ID-token authentication
