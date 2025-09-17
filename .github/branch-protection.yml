@@ -1,0 +1,355 @@
+# GitHub Branch Protection Rules Configuration
+# Part of PR C (Security Hygiene) - Enforces security best practices and compliance controls
+# Ensures appropriate review requirements, status checks, and access controls based on environment criticality
+
+version: '1'
+
+# Branch protection rules for the Veria repository
+# Implements security hygiene controls aligned with SOX, FINRA, and SEC compliance requirements
+branch_protection_rules:
+  
+  # Production Branch Protection - Highest Security Level
+  - branch: "main"
+    description: "Production branch with maximum security controls for compliance and regulatory requirements"
+    
+    # Pull Request Review Requirements
+    required_pull_request_reviews:
+      # Require minimum 2 approvals for production changes to ensure adequate oversight
+      required_approving_review_count: 2
+      
+      # Dismiss stale reviews when new commits are pushed to ensure fresh review of changes
+      dismiss_stale_reviews: true
+      
+      # Require review from code owners for changes to critical infrastructure and service code
+      require_code_owner_reviews: true
+      
+      # Include administrators in pull request review requirements (no bypass allowed)
+      restrict_dismissals: false
+      
+      # Allow specified users/teams to dismiss pull request reviews
+      dismissal_restrictions:
+        users: []
+        teams: 
+          - "veria-security-team"
+          - "veria-compliance-team"
+    
+    # Required Status Checks for Production Deployment
+    required_status_checks:
+      # Require branches to be up-to-date before merging to prevent integration issues
+      strict: true
+      
+      # Required CI/CD and security validation checks before production deployment
+      contexts:
+        # Primary CI pipeline including lint, type-check, test, build, and docker jobs
+        - "ci"
+        
+        # Security scanning including SBOM generation and vulnerability analysis
+        - "security-scan" 
+        
+        # Post-deployment validation with ID-token authenticated health checks
+        - "smoke-test"
+        
+        # Schema validation for database and API contract compliance
+        - "schema-check"
+        
+        # Infrastructure as code validation for Terraform configurations
+        - "terraform-validate"
+        
+        # Compliance checks for regulatory requirements (SOX, FINRA, SEC)
+        - "compliance-validation"
+    
+    # Push Restrictions and Access Controls
+    restrictions:
+      # Restrict direct pushes to production branch to enforce PR workflow
+      users: []
+      teams: 
+        # Only senior engineering and security teams can bypass PR requirements in emergencies
+        - "veria-security-team"
+        - "veria-senior-engineers"
+      
+      # Include administrators in push restrictions to maintain governance
+      apps: []
+    
+    # Additional Security Controls
+    enforce_admins: true                    # Include repository administrators in all restrictions
+    allow_force_pushes: false              # Prevent force pushes to maintain audit trail
+    allow_deletions: false                 # Prevent branch deletion to preserve history
+    required_linear_history: true          # Require linear history to simplify auditing
+    block_creations: false                 # Allow branch creation for development workflow
+
+  # Staging Branch Protection - Moderate Security Level  
+  - branch: "staging"
+    description: "Staging branch for integration testing and pre-production validation"
+    
+    # Pull Request Review Requirements
+    required_pull_request_reviews:
+      # Require minimum 1 approval for staging changes to balance speed and oversight
+      required_approving_review_count: 1
+      
+      # Dismiss stale reviews to ensure current code is reviewed
+      dismiss_stale_reviews: true
+      
+      # Require code owner reviews for critical paths
+      require_code_owner_reviews: true
+      
+      # Allow more flexible dismissal for staging environment
+      restrict_dismissals: false
+      
+      # Staging dismissal permissions
+      dismissal_restrictions:
+        users: []
+        teams: 
+          - "veria-engineering-team"
+          - "veria-security-team"
+    
+    # Required Status Checks for Staging
+    required_status_checks:
+      # Less strict branch updating requirements for faster iteration
+      strict: false
+      
+      # Essential checks for staging deployment
+      contexts:
+        # Core CI pipeline validation
+        - "ci"
+        
+        # Security scanning and vulnerability assessment
+        - "security-scan"
+        
+        # Integration testing for multi-service validation
+        - "integration-tests"
+        
+        # Performance testing to validate resource requirements
+        - "performance-tests"
+    
+    # Staging Push Restrictions
+    restrictions:
+      users: []
+      teams: 
+        # Allow engineering teams to push directly to staging for rapid iteration
+        - "veria-engineering-team"
+        - "veria-qa-team"
+        - "veria-security-team"
+      apps: []
+    
+    # Staging Security Controls
+    enforce_admins: false                  # Allow admin bypasses for staging troubleshooting
+    allow_force_pushes: true               # Allow force pushes for staging resets (admin only)
+    allow_deletions: false                 # Prevent accidental branch deletion
+    required_linear_history: false         # Allow merge commits for feature integration
+    block_creations: false
+
+  # Development Branch Protection - Basic Security Level
+  - branch: "develop" 
+    description: "Development branch for active feature development and daily integration"
+    
+    # Pull Request Review Requirements (Optional for development)
+    required_pull_request_reviews:
+      # Minimal review requirements to encourage rapid development
+      required_approving_review_count: 0
+      
+      # Don't dismiss stale reviews to reduce friction
+      dismiss_stale_reviews: false
+      
+      # Code owner reviews not required for development branch
+      require_code_owner_reviews: false
+      
+      # Flexible review management for development
+      restrict_dismissals: false
+    
+    # Required Status Checks for Development  
+    required_status_checks:
+      # Don't require up-to-date branches for development speed
+      strict: false
+      
+      # Minimal checks to catch basic issues
+      contexts:
+        # Basic CI validation to catch compilation and test failures
+        - "ci"
+        
+        # Lint and type checking for code quality
+        - "lint-and-type-check"
+        
+        # Unit tests to validate individual component functionality
+        - "test"
+    
+    # Development Push Restrictions
+    restrictions:
+      # Allow broad team access for collaborative development
+      users: []
+      teams: 
+        - "veria-engineering-team"
+        - "veria-qa-team"
+        - "veria-frontend-team"
+        - "veria-backend-team"
+      apps: []
+    
+    # Development Security Controls
+    enforce_admins: false                  # Allow admin flexibility for development
+    allow_force_pushes: false              # Prevent force pushes to maintain development history
+    allow_deletions: false                 # Prevent accidental branch deletion
+    required_linear_history: true          # Require linear history for clean development flow
+    block_creations: false
+
+# Global Security Settings
+global_settings:
+  
+  # Default branch protection for new branches
+  default_branch_protection:
+    required_status_checks:
+      contexts:
+        - "ci"
+    allow_force_pushes: false
+    allow_deletions: false
+  
+  # Security policies for sensitive file patterns
+  path_based_restrictions:
+    
+    # Infrastructure and Configuration Files
+    - path: ".github/workflows/*"
+      required_reviewers: 2
+      required_teams: ["veria-security-team"]
+      description: "CI/CD workflows require security team review"
+    
+    - path: "infra/**/*"
+      required_reviewers: 2  
+      required_teams: ["veria-infrastructure-team", "veria-security-team"]
+      description: "Infrastructure as Code requires infrastructure and security review"
+    
+    - path: "*.tf"
+      required_reviewers: 2
+      required_teams: ["veria-infrastructure-team"]
+      description: "Terraform configurations require infrastructure team review"
+    
+    # Security and Compliance Documentation
+    - path: "docs/security-*"
+      required_reviewers: 1
+      required_teams: ["veria-security-team"]
+      description: "Security documentation requires security team review"
+    
+    - path: "CODEOWNERS"
+      required_reviewers: 2
+      required_teams: ["veria-security-team", "veria-engineering-management"]
+      description: "CODEOWNERS file changes require security and management review"
+    
+    # Service Code and Core Logic
+    - path: "services/**/*"
+      required_reviewers: 1
+      required_teams: ["veria-backend-team"]
+      description: "Backend service code requires backend team review"
+    
+    - path: "packages/auth-middleware/**/*"
+      required_reviewers: 2
+      required_teams: ["veria-security-team", "veria-backend-team"]
+      description: "Authentication middleware requires security and backend review"
+
+# Compliance and Audit Configuration
+compliance_settings:
+  
+  # Audit Requirements
+  audit_logging:
+    # Log all branch protection changes for compliance auditing
+    enabled: true
+    
+    # Retention period for audit logs (required for SOX compliance)
+    retention_period: "7 years"
+    
+    # Events to log for regulatory compliance
+    logged_events:
+      - "branch_protection_rule_created"
+      - "branch_protection_rule_updated" 
+      - "branch_protection_rule_deleted"
+      - "required_status_check_bypassed"
+      - "admin_enforcement_bypassed"
+      - "force_push_attempted"
+      - "branch_deletion_attempted"
+  
+  # Regulatory Framework Alignment
+  regulatory_compliance:
+    
+    # SOX (Sarbanes-Oxley) Controls
+    sox_controls:
+      - "Separation of duties through required reviews"
+      - "Change management through PR workflow"
+      - "Audit trail through Git history and protection logs"
+      - "Access controls through team-based restrictions"
+    
+    # FINRA Controls  
+    finra_controls:
+      - "Supervised review of production changes"
+      - "Immutable audit trail through Git commits"
+      - "Electronic record retention through branch protection"
+    
+    # SEC Controls
+    sec_controls:
+      - "Internal controls over financial reporting code"
+      - "Documentation of changes through PR process"
+      - "Management oversight through approval requirements"
+
+# Monitoring and Alerting
+monitoring:
+  
+  # Branch Protection Violation Alerts
+  alerts:
+    - name: "force_push_attempted"
+      severity: "high"
+      notification_channels: ["veria-security-alerts", "veria-engineering-management"]
+      description: "Alert when force push is attempted on protected branch"
+    
+    - name: "admin_bypass_used"
+      severity: "medium" 
+      notification_channels: ["veria-security-alerts"]
+      description: "Alert when admin bypass is used on protected branch"
+    
+    - name: "status_check_failed"
+      severity: "low"
+      notification_channels: ["veria-engineering-team"]
+      description: "Alert when required status check fails"
+  
+  # Metrics Collection
+  metrics:
+    - name: "protection_rule_violations"
+      type: "counter"
+      labels: ["branch", "violation_type", "user"]
+      description: "Count of branch protection rule violations"
+    
+    - name: "pr_approval_time"
+      type: "histogram" 
+      labels: ["branch", "team"]
+      description: "Time from PR creation to required approvals"
+    
+    - name: "status_check_duration"
+      type: "histogram"
+      labels: ["branch", "check_name"]
+      description: "Duration of required status checks"
+
+# Documentation and References
+documentation:
+  
+  # Implementation Guide
+  implementation_notes:
+    - "Branch protection rules enforce security hygiene as part of PR C deliverable"
+    - "Rules align with compliance requirements for SOX, FINRA, and SEC"
+    - "Status checks reference existing and planned CI/CD workflows"
+    - "Team assignments must align with CODEOWNERS file"
+    - "Regular review of protection rules required for effectiveness"
+  
+  # Related Files and Dependencies
+  related_files:
+    - ".github/CODEOWNERS"
+    - ".github/workflows/ci.yml"
+    - ".github/workflows/smoke-test.yml"
+    - "infra/terraform/README.md"
+    - "docs/security-boundaries.md"
+  
+  # Rollback Procedures
+  rollback_procedures:
+    - "Branch protection rules can be disabled via repository settings"
+    - "Emergency bypass available through admin override"
+    - "Rule modifications require PR to this configuration file"
+    - "Audit trail maintained for all changes and bypasses"
+  
+  # Verification Commands
+  verification_commands:
+    - "gh api repos/PROACTIVA-US/Veria/branches/main/protection"
+    - "gh api repos/PROACTIVA-US/Veria/branches/staging/protection"  
+    - "gh api repos/PROACTIVA-US/Veria/branches/develop/protection"
