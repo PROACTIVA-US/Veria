@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import { Mutex } from 'async-mutex';
 import suggestRouter from './routes/suggest.js';
 import { policyEngine, PolicyRuleset } from './middleware/policyEngine.js';
 import { provenanceLogger } from './middleware/provenance.js';
@@ -9,32 +10,54 @@ import fs from 'fs/promises';
 
 const PORT = Number(process.env.PORT || 4001);
 
-// Policy caching mechanism
+// Policy caching mechanism with mutex for thread safety
 let cachedPolicy: PolicyRuleset | null = null;
 let policyLoadTime = 0;
 const POLICY_CACHE_TTL = 60000; // 1 minute cache
+const policyMutex = new Mutex();
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function loadPolicyWithRetry(attempt: number = 1): Promise<PolicyRuleset> {
+  try {
+    const policyPath = process.env.POLICY_PATH || 'policy/policy.example.json';
+    const raw = await fs.readFile(policyPath, 'utf8');
+    const policy = JSON.parse(raw);
+    console.log(`Policy loaded from ${policyPath} (attempt ${attempt})`);
+    return policy;
+  } catch (error) {
+    console.error(`Failed to load policy (attempt ${attempt}/${MAX_RETRY_ATTEMPTS}):`, error);
+
+    if (attempt < MAX_RETRY_ATTEMPTS) {
+      await sleep(RETRY_DELAY * attempt); // Exponential backoff
+      return loadPolicyWithRetry(attempt + 1);
+    }
+
+    // Return a default restrictive policy after all retries fail
+    console.error('All retry attempts failed, using fallback policy');
+    return {
+      version: 'error-fallback',
+      jurisdictions: {},
+      quotas: { default: { rps: 1, burst: 2 } },
+      redaction: { fields: [], rules: [] },
+      denyList: []
+    };
+  }
+}
 
 async function loadPolicy(): Promise<PolicyRuleset> {
-  const now = Date.now();
-  if (!cachedPolicy || (now - policyLoadTime) > POLICY_CACHE_TTL) {
-    try {
-      const policyPath = process.env.POLICY_PATH || 'policy/policy.example.json';
-      const raw = await fs.readFile(policyPath, 'utf8');
-      cachedPolicy = JSON.parse(raw);
+  return policyMutex.runExclusive(async () => {
+    const now = Date.now();
+    if (!cachedPolicy || (now - policyLoadTime) > POLICY_CACHE_TTL) {
+      cachedPolicy = await loadPolicyWithRetry();
       policyLoadTime = now;
-      console.log(`Policy loaded from ${policyPath}`);
-    } catch (error) {
-      console.error('Failed to load policy:', error);
-      // Return a default restrictive policy on error
-      return {
-        version: 'error-fallback',
-        jurisdictions: {},
-        quotas: { default: { rps: 1, burst: 2 } },
-        redaction: { fields: [], rules: [] }
-      };
     }
-  }
-  return cachedPolicy!;
+    return cachedPolicy!;
+  });
 }
 
 // Initialize app and middleware in async context
