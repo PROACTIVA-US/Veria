@@ -3,7 +3,7 @@ export type PolicyRuleset = {
   jurisdictions: Record<string, { allow: boolean }>;
   quotas?: Record<string, { rps: number; burst: number }>;
   redaction?: { fields: string[]; rules?: any[] };
-  denyList: string[];
+  denyList?: string[];
   obligations?: string[];
 };
 
